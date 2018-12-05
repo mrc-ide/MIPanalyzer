@@ -5,7 +5,7 @@ Version: 0.1.0
 Author: Bob Verity
 Maintainer: Bob Verity <r.verity@imperial.ac.uk>
 Description: Filtering and analysis of MIP data.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 LinkingTo: 
