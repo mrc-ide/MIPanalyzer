@@ -6,17 +6,6 @@
 \usage{
 dummy1(x = 1:5)
 }
-\arguments{
-\item{x}{vector of values}
-}
 \description{
-Simple test function that demonstrates some of the features of
-  this package.
-}
-\details{
-Takes a vector of values, returns the square.
-}
-\examples{
-# Find square of first 100 values
-dummy1(1:100)
+Dummy function
 }
