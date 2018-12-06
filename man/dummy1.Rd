@@ -6,6 +6,9 @@
 \usage{
 dummy1(x = 1:5)
 }
+\arguments{
+\item{x}{nubers to square.}
+}
 \description{
 Dummy function
 }

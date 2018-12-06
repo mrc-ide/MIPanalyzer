@@ -6,6 +6,11 @@
 \usage{
 mipanalyzer_data(n = 50, L = 100)
 }
+\arguments{
+\item{n}{number of samples.}
+
+\item{L}{number of loci}
+}
 \description{
 Create mipanalyzer_data object.
 }

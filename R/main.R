@@ -9,6 +9,9 @@ NULL
 #'
 #' @description Create mipanalyzer_data object.
 #'
+#' @param n number of samples.
+#' @param L number of loci
+#'
 #' @export
 
 mipanalyzer_data <- function(n = 50, L = 100) {
@@ -28,6 +31,8 @@ mipanalyzer_data <- function(n = 50, L = 100) {
 #' @title Dummy function
 #'
 #' @description Dummy function
+#' 
+#' @param x nubers to square.
 #'
 #' @export
 
@@ -49,4 +54,5 @@ dummy1 <- function(x = 1:5) {
   # return
   return(ret)
 }
+
 
