@@ -11,8 +11,16 @@ LazyData: true
 LinkingTo: 
     Rcpp
 Imports: 
-    Rcpp
-RoxygenNote: 6.1.0
+    Rcpp,
+    vcfR,
+    magrittr,
+    dplyr,
+    reshape2,
+    RColorBrewer,
+    plotly,
+    tibble,
+    ggplot2
+RoxygenNote: 6.1.1
 SystemRequirements: C++11
 Suggests: 
     testthat,

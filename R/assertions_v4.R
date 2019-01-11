@@ -491,3 +491,14 @@ assert_noduplicates <- function(x, message = "%s must contain no duplicates", na
   }
   return(TRUE)
 }
+
+#------------------------------------------------
+# file exists at chosen path
+#' @noRd
+assert_file_exists <- function(x, message = "file not found at path %s", name = deparse(substitute(x))) {
+  if (!file.exists(x)) {
+    stop(sprintf(message, name), call. = FALSE)
+  }
+  return(TRUE)
+}
+

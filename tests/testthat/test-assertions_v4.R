@@ -1,4 +1,4 @@
-context("assertions_v3")
+context("assertions_v4")
 
 #------------------------------------------------
 test_that("nice_format working correctly", {
@@ -485,3 +485,4 @@ test_that("assert_noduplicates working correctly", {
   expect_error(assert_noduplicates(c(1,1,2)))
   expect_error(assert_noduplicates(c("foo", "bar", "foo")))
 })
+

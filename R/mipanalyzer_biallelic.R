@@ -1,18 +1,18 @@
 
 #------------------------------------------------
-#' @title Custom print function for class mipanalyzer_data
+#' @title Custom print function for class mipanalyzer_biallelic
 #'   
-#' @description Custom print function for class \code{mipanalyzer_data},
+#' @description Custom print function for class \code{mipanalyzer_biallelic},
 #'   printing a summary of the key elements (also equivalent to
 #'   \code{summary(x)}). To do an ordinary \code{print()}, use the
 #'   \code{print_full()} function.
 #' 
-#' @param x object of class \code{mipanalyzer_data}
+#' @param x object of class \code{mipanalyzer_biallelic}
 #' @param ... other arguments (ignored)
 #' 
 #' @export
 
-print.mipanalyzer_data <- function(x, ...) {
+print.mipanalyzer_biallelic <- function(x, ...) {
   
   # print summary
   summary(x)
@@ -22,14 +22,14 @@ print.mipanalyzer_data <- function(x, ...) {
 }
 
 #------------------------------------------------
-#' @title Ordinary print function for class mipanalyzer_data
+#' @title Ordinary print function for class mipanalyzer_biallelic
 #'
 #' @description Calling \code{print()} on an object of class
-#'   \code{mipanalyzer_data} results in custom output. This function therefore
+#'   \code{mipanalyzer_biallelic} results in custom output. This function therefore
 #'   stands in for the base \code{print()} function, and is equivalent to
 #'   running \code{print(unclass(x))}.
 #'
-#' @param x object of class \code{mipanalyzer_data}
+#' @param x object of class \code{mipanalyzer_biallelic}
 #' @param ... other arguments passed to \code{print()}
 #'
 #' @export
@@ -37,7 +37,7 @@ print.mipanalyzer_data <- function(x, ...) {
 print_full <- function(x, ...) {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_data")
+  assert_custom_class(x, "mipanalyzer_biallelic")
   
   # print un-classed object
   print(unclass(x), ...)
@@ -47,34 +47,34 @@ print_full <- function(x, ...) {
 }
 
 #------------------------------------------------
-#' @title Print summary for class mipanalyzer_data
+#' @title Print summary for class mipanalyzer_biallelic
 #'   
-#' @description Custom summary function for class \code{mipanalyzer_data}.
+#' @description Custom summary function for class \code{mipanalyzer_biallelic}.
 #'   
-#' @param object object of class \code{mipanalyzer_data}
+#' @param object object of class \code{mipanalyzer_biallelic}
 #' @param ... other arguments (ignored)
 #'   
 #' @export
 
-summary.mipanalyzer_data <- function(object, ...) {
+summary.mipanalyzer_biallelic <- function(object, ...) {
   
   # summarise raw data
-  n_samples <- dim(object$coverage)[2]
-  n_loci <- dim(object$coverage)[3]
+  n_samples <- nrow(object$coverage)
+  n_loci <- ncol(object$coverage)
   
   message(sprintf("samples = %s", n_samples))
   message(sprintf("loci = %s", n_loci))
 }
 
 #------------------------------------------------
-#' @title Determine if object is of class mipanalyzer_data
+#' @title Determine if object is of class mipanalyzer_biallelic
 #'
-#' @description Determine if object is of class \code{mipanalyzer_data}.
+#' @description Determine if object is of class \code{mipanalyzer_biallelic}.
 #'
-#' @param x object of class \code{mipanalyzer_data}
+#' @param x object of class \code{mipanalyzer_biallelic}
 #'
 #' @export
 
-is.mipanalyzer_data <- function(x) {
-  inherits(x, "mipanalyzer_data")
+is.mipanalyzer_biallelic <- function(x) {
+  inherits(x, "mipanalyzer_biallelic")
 }
