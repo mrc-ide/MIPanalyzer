@@ -62,8 +62,7 @@ summary.mipanalyzer_biallelic <- function(object, ...) {
   n_samples <- nrow(object$coverage)
   n_loci <- ncol(object$coverage)
   
-  message(sprintf("samples = %s", n_samples))
-  message(sprintf("loci = %s", n_loci))
+  message(sprintf("samples = %s\nloci = %s", n_samples, n_loci))
 }
 
 #------------------------------------------------

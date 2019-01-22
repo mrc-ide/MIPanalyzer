@@ -4,12 +4,14 @@
 \alias{plot_pca}
 \title{Plot PCA}
 \usage{
-plot_pca(pca, num_components = 2)
+plot_pca(pca, num_components = 2, col = NULL)
 }
 \arguments{
 \item{pca}{output of \code{pca_wsaf()} function.}
 
 \item{num_components}{numeric for number of components used. Default = 2.}
+
+\item{col}{vector of colours applied to each sample.}
 }
 \description{
 Plots either the first 2 or 3 principal components.

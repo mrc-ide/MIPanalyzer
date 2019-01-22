@@ -51,7 +51,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   # extract coverage and counts matrices
   coverage <- t(vcfR::extract.gt(vcf, element = "DP", as.numeric = T))
   counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
-  counts <- masplit(counts_raw, record = 1)
+  counts <- masplit(counts_raw, record = 1, sort = FALSE, decreasing = FALSE)
   
   # check that all missing fields correspond between coverage and counts
   if (!identical(is.na(coverage), is.na(counts))) {
@@ -112,6 +112,44 @@ filter_samples <- function(x, sample_filter, description = "") {
   x$coverage <- x$coverage[sample_filter,]
   x$counts <- x$counts[sample_filter,]
   x$samples <- x$samples[sample_filter,]
+  
+  # record filter
+  function_call <- paste0(deparse(match.call()), collapse = "")
+  x$filter_history <- rbind(x$filter_history, list(description = description,
+                                                   samples = nrow(x$coverage),
+                                                   loci = ncol(x$coverage),
+                                                   n_missing = sum(is.na(x$coverage)),
+                                                   prop_missing = mean(is.na(x$coverage)),
+                                                   function_call = function_call))
+  
+  return(x)
+}
+
+#------------------------------------------------
+#' @title Filter out some loci
+#'
+#' @description Filter out some loci.
+#' 
+#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param locus_filter boolean vector specifying whether to keep (\code{TRUE})
+#'   or drop (\code{FALSE}) each locus.
+#' @param description brief description of the filter, to be saved in the filter
+#'   history.
+#'
+#' @export
+
+filter_loci <- function(x, locus_filter, description = "") {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_vector(locus_filter)
+  assert_logical(locus_filter)
+  assert_eq(length(locus_filter), nrow(x$loci))
+  
+  # apply filter
+  x$coverage <- x$coverage[,locus_filter]
+  x$counts <- x$counts[,locus_filter]
+  x$loci <- x$loci[locus_filter,]
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -506,16 +544,22 @@ plot_pca_variance <- function(pca, num_components = 10) {
 #'
 #' @param pca output of \code{pca_wsaf()} function.
 #' @param num_components numeric for number of components used. Default = 2.
+#' @param col vector of colours applied to each sample.
 #'
 #' @importFrom plotly plot_ly
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 
-plot_pca <- function(pca, num_components = 2) {
+plot_pca <- function(pca, num_components = 2, col = NULL) {
   
   # check inputs
   assert_custom_class(pca, "prcomp")
   assert_in(num_components, c(2,3))
+  if (is.null(col)) {
+    col <- rep(1, nrow(pca$x))
+  }
+  assert_vector(col)
+  assert_length(col, nrow(pca$x))
   
   # check num_components
   nc <- min(ncol(pca$x), num_components)
@@ -530,7 +574,7 @@ plot_pca <- function(pca, num_components = 2) {
     # scatterplot of first 2 principal components
     # 2D scatter
     plot1 <- plot_ly(as.data.frame(pca$x), x = ~PC1, y = ~PC2,
-                     color = 1, type = "scatter", colors = col_vec,
+                     color = col, type = "scatter", colors = col_vec,
                      mode = "markers", marker = list(size = 5))
   }
   
@@ -538,7 +582,7 @@ plot_pca <- function(pca, num_components = 2) {
     # scatterplot of first 3 principal components
     # 3D scatter
     plot1 <- plot_ly(as.data.frame(pca$x[, 1:3]), x = ~PC1, y = ~PC2, z = ~PC3,
-                     color = 1, type = "scatter3d", colors = col_vec,
+                     color = col, type = "scatter3d", colors = col_vec,
                      mode = "markers", marker = list(size = 3))
   }
   
