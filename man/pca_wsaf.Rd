@@ -7,7 +7,8 @@
 pca_wsaf(x)
 }
 \arguments{
-\item{x}{within-sample allele frequency matrix.}
+\item{x}{a matrix of within-sample allele frequencies, as produced by the
+function \code{get_wsaf()}.}
 }
 \value{
 Invisibly returns a list of class `prcomp` with the following 
@@ -28,9 +29,9 @@ Invisibly returns a list of class `prcomp` with the following
       }
 }
 \description{
-Conduct principal components analysis (PCA) on input matrix of
-  within-sample allele frequencies (WSAF), as returned by \code{get_WSAF()}
-  function. Requires that any missing values have already been imputed.
-  Ouptut includes the raw components, the variance in the data explained by
-  each component, and the loadings of each component also returned.
+Conduct principal components analysis (PCA) on a matrix of
+  within-sample allele frequencies (WSAF). Missing values must have been
+  already imputed. Output includes the raw components, the variance in the
+  data explained by each component, and the loadings of each component also
+  returned.
 }

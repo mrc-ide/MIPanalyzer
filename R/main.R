@@ -425,12 +425,12 @@ plot_coverage <- function(x) {
 #'
 #' @param x object of class \code{mipanalyzer_biallelic}.
 #' @param impute whether to impute missing values.
-#' @param FUN function used to impute missing values. Default = `mean`
+#' @param FUN function used to impute missing values. Default = `median`
 #' @param ... other arguments to pass to \code{FUN}.
 #' 
 #' @export
 
-get_wsaf <- function(x, impute = TRUE, FUN = mean, ...) {
+get_wsaf <- function(x, impute = TRUE, FUN = median, ...) {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
@@ -450,15 +450,89 @@ get_wsaf <- function(x, impute = TRUE, FUN = mean, ...) {
 }
 
 #------------------------------------------------
+#' @title Get genomic distance between samples
+#'
+#' @description Get genomic distance between samples using a distance metric
+#'   that allows for mixed infections and takes account of linkage (see
+#'   references for details).
+#' 
+#' @references MalariaGEN Plasmodium falciparum Community Project. "Genomic
+#'   epidemiology of artemisinin resistant malaria". eLIFE (2016).
+#' 
+#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param cutoff when calculating weights, correlations below this value are
+#'   ignored (see references).
+#' @param report_progress if \code{TRUE} then a progress bar is printed to the
+#'   console.
+#'
+#' @importFrom stats prcomp
+#' @export
+
+get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_in(c("CHROM", "POS"), names(x$loci), message = "the `loci` component of the data must contain columns `CHROM` and `POS`")
+  
+  # get basic quantities
+  nsamp <- nrow(x$samples)
+  chrom_levels <- levels(x$loci$CHROM)
+  nchrom <- length(chrom_levels)
+  
+  # get within-sample allele frequencies
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # calculate weights
+  weight <- NULL
+  for (i in 1:nchrom) {
+    
+    # get correlation matrix between SNPs
+    w <- which(x$loci$CHROM == chrom_levels[i])
+    cormat <- suppressWarnings(cor(wsaf[w,w], use = "pairwise.complete.obs"))
+    cormat_na <- apply(cormat, 1, function(x) all(is.na(x)))
+    cormat[cormat < cutoff] <- 0
+    
+    # calculate weights
+    tmp <- rowSums(cormat^2, na.rm = TRUE)
+    tmp[cormat_na] <- NA
+    weight <- c(weight, 1/tmp)
+  }
+  
+  # initialise progress bar
+  if (report_progress) {
+    pbar <- txtProgressBar(0, nsamp, style = 3)
+  }
+  
+  # calculate distance matrix
+  dist_mat <- matrix(NA, nsamp, nsamp)
+  for (i in 1:(nsamp-1)) {
+    
+    # calculate distance between sample i and all others
+    dab <- sweep(1-wsaf[-(1:i),,drop = FALSE], 2, wsaf[i,], "*") + sweep(wsaf[-(1:i),,drop = FALSE], 2, 1-wsaf[i,], "*")
+    dab_weighted <- sweep(dab, 2, weight, "*")
+    dist_mat[i,-(1:i)] <- rowSums(dab_weighted, na.rm = TRUE)
+    
+    # update progress bar
+    if (report_progress) {
+      setTxtProgressBar(pbar, i)
+    }
+  }
+  
+  # return distance matrix
+  invisible(dist_mat)
+}
+
+#------------------------------------------------
 #' @title PCA of within-sample allele frequencies
 #'
-#' @description Conduct principal components analysis (PCA) on input matrix of
-#'   within-sample allele frequencies (WSAF), as returned by \code{get_WSAF()}
-#'   function. Requires that any missing values have already been imputed.
-#'   Ouptut includes the raw components, the variance in the data explained by
-#'   each component, and the loadings of each component also returned.
+#' @description Conduct principal components analysis (PCA) on a matrix of
+#'   within-sample allele frequencies (WSAF). Missing values must have been
+#'   already imputed. Output includes the raw components, the variance in the
+#'   data explained by each component, and the loadings of each component also
+#'   returned.
 #'  
-#' @param x within-sample allele frequency matrix.
+#' @param x a matrix of within-sample allele frequencies, as produced by the
+#'   function \code{get_wsaf()}.
 #'
 #' @return Invisibly returns a list of class `prcomp` with the following 
 #'   components
@@ -485,7 +559,7 @@ pca_wsaf <- function(x) {
   assert_matrix(x)
   assert_numeric(x)
   if (any(is.na(x))) {
-    stop("input matrix cannot contain any missing values")
+    stop("input matrix cannot contain missing values. If produced using the function get_wsaf() then ensure that imputation is turned on")
   }
   
   # compute PCA
@@ -544,13 +618,14 @@ plot_pca_variance <- function(pca, num_components = 10) {
 #'
 #' @param pca output of \code{pca_wsaf()} function.
 #' @param num_components numeric for number of components used. Default = 2.
-#' @param col vector of colours applied to each sample.
+#' @param col vector by which samples are coloured.
+#' @param col_palette vector of colours for each group.
 #'
 #' @importFrom plotly plot_ly
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 
-plot_pca <- function(pca, num_components = 2, col = NULL) {
+plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
   
   # check inputs
   assert_custom_class(pca, "prcomp")
@@ -560,6 +635,9 @@ plot_pca <- function(pca, num_components = 2, col = NULL) {
   }
   assert_vector(col)
   assert_length(col, nrow(pca$x))
+  if (is.null(col_palette)) {
+    col_palette <- suppressWarnings(brewer.pal(3, "Set1"))
+  }
   
   # check num_components
   nc <- min(ncol(pca$x), num_components)
@@ -567,22 +645,99 @@ plot_pca <- function(pca, num_components = 2, col = NULL) {
     message("Using all the components (", nc, ") that are available.")
   }
   
-  # create color vector
-  col_vec <- suppressWarnings(brewer.pal(3, "Set1"))
-  
-  if (nc == 2) {
+  if (num_components == 2) {
     # scatterplot of first 2 principal components
     # 2D scatter
     plot1 <- plot_ly(as.data.frame(pca$x), x = ~PC1, y = ~PC2,
-                     color = col, type = "scatter", colors = col_vec,
+                     color = col, type = "scatter", colors = col_palette,
                      mode = "markers", marker = list(size = 5))
   }
   
-  if (nc == 3) {
+  if (num_components == 3) {
     # scatterplot of first 3 principal components
     # 3D scatter
     plot1 <- plot_ly(as.data.frame(pca$x[, 1:3]), x = ~PC1, y = ~PC2, z = ~PC3,
-                     color = col, type = "scatter3d", colors = col_vec,
+                     color = col, type = "scatter3d", colors = col_palette,
+                     mode = "markers", marker = list(size = 3))
+  }
+  
+  # render and return invisibly
+  print(plot1)
+  invisible(plot1)
+}
+
+#------------------------------------------------
+#' @title PCoA of genomic distances between samples
+#'
+#' @description Conduct principal coordinate analysis (PCoA) on a matrix of
+#'   genomic distances.
+#'  
+#' @param x matrix of genomic distances, as produced by the function
+#'   \code{get_genomic_distance()}.
+#'
+#' @importFrom ape pcoa
+#' @export
+
+pcoa_genomic_distance <- function(x) {
+  
+  # check inputs
+  assert_matrix(x)
+  assert_numeric(x)
+  
+  # mask the diagonal and reflect
+  x[is.na(x)] <- 0
+  x <- x + t(x)
+  
+  # compute PCoA
+  ret <- ape::pcoa(x)
+  
+  # return PCoA
+  invisible(ret)
+}
+
+#------------------------------------------------
+#' @title Plot PCoA
+#'
+#' @description Plots either the first 2 or 3 vectors of PCoA.
+#'
+#' @param pcoa object of class "pcoa", as produced by \code{pcoa_wsaf()} function.
+#' @param num_components numeric for number of components used. Default = 2.
+#' @param col vector by which samples are coloured.
+#' @param col_palette vector of colours for each group.
+#'
+#' @importFrom plotly plot_ly
+#' @importFrom RColorBrewer brewer.pal
+#' @export
+
+plot_pcoa <- function(pcoa, num_components = 2, col = NULL, col_palette = NULL) {
+  
+  # check inputs
+  assert_custom_class(pcoa, "pcoa")
+  assert_in(num_components, c(2,3))
+  if (is.null(col)) {
+    col <- rep(1, nrow(pcoa$vectors))
+  }
+  assert_vector(col)
+  assert_length(col, nrow(pcoa$vectors))
+  if (is.null(col_palette)) {
+    col_palette <- suppressWarnings(brewer.pal(3, "Set1"))
+  }
+  
+  df <- data.frame(pcoa$vectors[,1:3])
+  names(df) <- c("PC1", "PC2", "PC3")
+  if (num_components == 2) {
+    # scatterplot of first 2 principal components
+    # 2D scatter
+    plot1 <- plot_ly(df, x = ~PC1, y = ~PC2,
+                     color = col, type = "scatter", colors = col_palette,
+                     mode = "markers", marker = list(size = 5))
+  }
+  
+  if (num_components == 3) {
+    # scatterplot of first 3 principal components
+    # 3D scatter
+    plot1 <- plot_ly(df, x = ~PC1, y = ~PC2, z = ~PC3,
+                     color = col, type = "scatter3d", colors = col_palette,
                      mode = "markers", marker = list(size = 3))
   }
   

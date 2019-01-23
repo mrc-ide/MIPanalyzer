@@ -4,14 +4,14 @@
 \alias{get_wsaf}
 \title{Get within-sample allele frequencies}
 \usage{
-get_wsaf(x, impute = TRUE, FUN = mean, ...)
+get_wsaf(x, impute = TRUE, FUN = median, ...)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}
 
 \item{impute}{whether to impute missing values.}
 
-\item{FUN}{function used to impute missing values. Default = `mean`}
+\item{FUN}{function used to impute missing values. Default = `median`}
 
 \item{...}{other arguments to pass to \code{FUN}.}
 }
