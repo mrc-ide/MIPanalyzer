@@ -16,9 +16,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// inbreeding_mle
+Rcpp::List inbreeding_mle(Rcpp::List args);
+RcppExport SEXP _MIPanalyzer_inbreeding_mle(SEXP argsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type args(argsSEXP);
+    rcpp_result_gen = Rcpp::wrap(inbreeding_mle(args));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_MIPanalyzer_dummy1_cpp", (DL_FUNC) &_MIPanalyzer_dummy1_cpp, 1},
+    {"_MIPanalyzer_inbreeding_mle", (DL_FUNC) &_MIPanalyzer_inbreeding_mle, 1},
     {NULL, NULL, 0}
 };
 

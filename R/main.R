@@ -747,6 +747,142 @@ plot_pcoa <- function(pcoa, num_components = 2, col = NULL, col_palette = NULL) 
 }
 
 #------------------------------------------------
+#' @title Estimate pairwise inbreeding coefficient F by maximum likelihood
+#'
+#' @description Estimates the inbreeding coefficient between all pairs of
+#'   samples by maximum likelihood.
+#'
+#' @details The probability of seeing the same or different alleles at a locus
+#'   can be written in terms of the global allele frequency p and the inbreeding
+#'   coefficient f, for example the probability of seeing the same REF allele is
+#'   \code{(1-f)*p^2 + f*p}. This formula can be multiplied over all loci to
+#'   arrive at the overall likelihood of each value of f, which can then be
+#'   chosen by maximum likelihood. This function carries out this comparison
+#'   between all pairwise samples, passed in as a matrix. The formula above only
+#'   applies when comparing homozygous calls - for homo/het or het/het
+#'   comparisons we can either ignore these loci (the default) or convert hets
+#'   to homo by calling the major allele at every locus.
+#'
+#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param f values of f that are explored.
+#' @param ignore_het whether to ignore heterzygous comparisons, or alternatively
+#'   call the major allele at every locus (see details).
+#' @param report_progress if \code{TRUE} then a progress bar is printed to the
+#'   console.
+#'
+#' @export
+
+inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = TRUE, report_progress = TRUE) {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_vector(f)
+  assert_bounded(f)
+  assert_single_logical(ignore_het)
+  assert_single_logical(report_progress)
+  
+  # get within-sample allele frequencies
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # get global allele frequencies
+  p <- colMeans(wsaf, na.rm = TRUE)
+  
+  # process hets
+  if (ignore_het) {
+    wsaf[wsaf != 0 & wsaf != 1] <- NA
+  } else {
+    wsaf <- round(wsaf)
+  }
+  
+  # convert NA to -1 before passing to C++
+  wsaf[is.na(wsaf)] <- -1
+  
+  # run efficient C++ function
+  args <- list(x = mat_to_rcpp(wsaf), f = f, p = p, report_progress = report_progress)
+  output_raw <- estimate_f_cpp(args)
+  
+  return(output_raw)
+  
+  # process output
+  ret <- rcpp_to_mat(output_raw$ret)
+  diag(ret) <- 1
+  
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Simulate biallelic data
+#'
+#' @description Simulate biallelic data.
+#'
+#' @details TODO
+#'
+#' @param COI complexity of infection.
+#' @param PLAF vector of population-level allele frequencies.
+#' @param coverage coverage at each locus. If a single value then the same
+#'   coverage is applied over all loci.
+#' @param alpha shape parameter of the symmetric Dirichlet prior on strain
+#'   proportions.
+#' @param overdispersion the extent to which counts are over-dispersed relative
+#'   to the binomial distribution. Counts are Beta-binomially distributed, with
+#'   the beta distribution having shape parameters \code{p/overdispersion} and
+#'   \code{(1-p)/overdispersion}.
+#' @param epsilon the probability of a single read being mis-called as the other
+#'   allele. Applies in both directions.
+#'
+#' @export
+
+sim_biallelic <- function(COI = 3,
+                          PLAF = seq(0,0.5,0.01),
+                          coverage = 100,
+                          alpha = 1,
+                          overdispersion = 0,
+                          epsilon = 0) {
+  
+  # check inputs
+  assert_single_pos_int(COI)
+  assert_vector(PLAF)
+  assert_bounded(PLAF)
+  L <- length(PLAF)
+  if (length(coverage) == 1) {
+    coverage <- rep(coverage, L)
+  }
+  assert_vector(coverage)
+  assert_pos_int(coverage)
+  assert_same_length(PLAF, coverage)
+  assert_single_pos(alpha, zero_allowed = FALSE)
+  assert_single_pos(overdispersion, zero_allowed = TRUE)
+  assert_single_pos(epsilon, zero_allowed = TRUE)
+  assert_bounded(epsilon)
+  
+  # generate strain proportions
+  w <- rdirichlet(rep(alpha, COI))
+  
+  # generate true WSAF levels by summing binomial draws over strain proportions
+  m <- mapply(function(x) rbinom(COI, 1, x), x = PLAF)
+  p_levels <- colSums(sweep(m, 1, w, "*"))
+  
+  # add in genotyping error
+  p_error <- p_levels*(1-epsilon) + (1-p_levels)*epsilon
+  
+  # draw read counts, taking into account overdispersion
+  if (overdispersion == 0) {
+    counts <- rbinom(L, size = coverage, prob = p_error)
+  } else {
+    counts <- rbetabinom(L, k = coverage, alpha = p_error/overdispersion, beta = (1-p_error)/overdispersion)
+  }
+  
+  # return list
+  ret <- list(COI = COI,
+              strain_proportions = w,
+              data = data.frame(PLAF = PLAF,
+                                coverage = coverage,
+                                counts = counts,
+                                WSAF = counts/coverage))
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Dummy function
 #'
 #' @description Dummy function
