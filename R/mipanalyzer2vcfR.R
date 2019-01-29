@@ -55,7 +55,7 @@ MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = cutoff){
   
   # write out new vcfRobj
   newvcfR <- new("vcfR", meta = meta, fix = fix, gt = gt)
-  ret(newvcfR)
+  return(newvcfR)
   
 }
 
