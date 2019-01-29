@@ -5,7 +5,7 @@ dummy1_cpp <- function(args) {
     .Call(`_MIPanalyzer_dummy1_cpp`, args)
 }
 
-inbreeding_mle <- function(args) {
-    .Call(`_MIPanalyzer_inbreeding_mle`, args)
+inbreeding_mle_cpp <- function(args, args_functions, args_progress) {
+    .Call(`_MIPanalyzer_inbreeding_mle_cpp`, args, args_functions, args_progress)
 }
 

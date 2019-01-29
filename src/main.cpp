@@ -28,42 +28,40 @@ Rcpp::List dummy1_cpp(Rcpp::List args) {
 //------------------------------------------------
 // estimate f by maximum likelihood
 // [[Rcpp::export]]
-Rcpp::List inbreeding_mle(Rcpp::List args) {
+Rcpp::List inbreeding_mle_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress) {
   
   // extract inputs
   vector<vector<int>> x = rcpp_to_matrix_int(args["x"]);
   vector<double> f = rcpp_to_vector_double(args["f"]);
   vector<double> p = rcpp_to_vector_double(args["p"]);
   bool report_progress = rcpp_to_bool(args["report_progress"]);
+  Rcpp::Function update_progress = args_functions["update_progress"];
   
-  return Rcpp::List::create(Rcpp::Named("ret") = -9);
-  
-  /*
   // get dimensions
   int n = x.size();
   int L = x[0].size();
   
-  // create q = 1-p
+  // create vector q = 1-p
   vector<double> q(L);
   for (int j=0; j<L; ++j) {
     q[j] = 1.0 - p[j];
   }
   
   // create lookup tables
-  vector<vector<double>> lookup_homo1(f_breaks, vector<double>(L));
-  vector<vector<double>> lookup_homo2(f_breaks, vector<double>(L));
-  vector<vector<double>> lookup_het(f_breaks, vector<double>(L));
-  for (int k=0; k<f_breaks; ++k) {
-    double f = k/double(f_breaks-1);
+  int nf = int(f.size());
+  vector<vector<double>> lookup_homo1(nf, vector<double>(L));
+  vector<vector<double>> lookup_homo2(nf, vector<double>(L));
+  vector<vector<double>> lookup_het(nf, vector<double>(L));
+  for (int k=0; k<nf; ++k) {
     for (int j=0; j<L; ++j) {
-      lookup_homo1[k][j] = log((1-f)*p[j]*p[j] + f*p[j]);
-      lookup_homo2[k][j] = log((1-f)*q[j]*q[j] + f*q[j]);
-      lookup_het[k][j] = log((1-f)*2*p[j]*q[j]);
+      lookup_homo1[k][j] = log((1-f[k])*p[j]*p[j] + f[k]*p[j]);
+      lookup_homo2[k][j] = log((1-f[k])*q[j]*q[j] + f[k]*q[j]);
+      lookup_het[k][j] = log((1-f[k])*2*p[j]*q[j]);
     }
   }
   
   // create objects for storing results
-  vector<double> loglike_vec(f_breaks);
+  vector<double> loglike_vec(nf);
   vector<vector<double>> ret(n, vector<double>(n));
   
   // loop through all pairwise samples
@@ -71,13 +69,13 @@ Rcpp::List inbreeding_mle(Rcpp::List args) {
     
     // report progress
     if (report_progress) {
-      print("sample", i1, "of", n);
+      update_progress(args_progress, "pb", i1, n-1);
     }
     
     for (int i2=(i1+1); i2<n; ++i2) {
       
       // calculate loglike for every value of f
-      for (int k=0; k<f_breaks; ++k) {
+      for (int k=0; k<nf; ++k) {
         double loglike = 0;
         for (int j=0; j<L; ++j) {
           if (x[i1][j] == -1 || x[i2][j] == -1) {
@@ -96,10 +94,10 @@ Rcpp::List inbreeding_mle(Rcpp::List args) {
       
       // store maximum likelihood f
       double best_loglike = loglike_vec[0];
-      for (int k=1; k<f_breaks; ++k) {
+      for (int k=1; k<nf; ++k) {
         if (loglike_vec[k] > best_loglike) {
           best_loglike = loglike_vec[k];
-          ret[i1][i2] = k/double(f_breaks-1);
+          ret[i1][i2] = f[k];
         }
       }
       
@@ -108,5 +106,5 @@ Rcpp::List inbreeding_mle(Rcpp::List args) {
   
   // return as Rcpp object
   return Rcpp::List::create(Rcpp::Named("ret") = ret);
-  */
+  
 }

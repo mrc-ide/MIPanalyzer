@@ -16,21 +16,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// inbreeding_mle
-Rcpp::List inbreeding_mle(Rcpp::List args);
-RcppExport SEXP _MIPanalyzer_inbreeding_mle(SEXP argsSEXP) {
+// inbreeding_mle_cpp
+Rcpp::List inbreeding_mle_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
+RcppExport SEXP _MIPanalyzer_inbreeding_mle_cpp(SEXP argsSEXP, SEXP args_functionsSEXP, SEXP args_progressSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type args(argsSEXP);
-    rcpp_result_gen = Rcpp::wrap(inbreeding_mle(args));
+    Rcpp::traits::input_parameter< Rcpp::List >::type args_functions(args_functionsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type args_progress(args_progressSEXP);
+    rcpp_result_gen = Rcpp::wrap(inbreeding_mle_cpp(args, args_functions, args_progress));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_MIPanalyzer_dummy1_cpp", (DL_FUNC) &_MIPanalyzer_dummy1_cpp, 1},
-    {"_MIPanalyzer_inbreeding_mle", (DL_FUNC) &_MIPanalyzer_inbreeding_mle, 1},
+    {"_MIPanalyzer_inbreeding_mle_cpp", (DL_FUNC) &_MIPanalyzer_inbreeding_mle_cpp, 3},
     {NULL, NULL, 0}
 };
 

@@ -488,7 +488,7 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
     
     # get correlation matrix between SNPs
     w <- which(x$loci$CHROM == chrom_levels[i])
-    cormat <- suppressWarnings(cor(wsaf[w,w], use = "pairwise.complete.obs"))
+    cormat <- suppressWarnings(cor(wsaf[,w], use = "pairwise.complete.obs"))
     cormat_na <- apply(cormat, 1, function(x) all(is.na(x)))
     cormat[cormat < cutoff] <- 0
     
@@ -797,11 +797,14 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = TRUE, report_progr
   # convert NA to -1 before passing to C++
   wsaf[is.na(wsaf)] <- -1
   
+  # create progress bars
+  pb <- txtProgressBar(min = 0, max = nrow(wsaf)-1, initial = NA, style = 3)
+  args_progress <- list(pb = pb)
+  
   # run efficient C++ function
   args <- list(x = mat_to_rcpp(wsaf), f = f, p = p, report_progress = report_progress)
-  output_raw <- estimate_f_cpp(args)
-  
-  return(output_raw)
+  args_functions <- list(update_progress = update_progress)
+  output_raw <- inbreeding_mle_cpp(args, args_functions, args_progress)
   
   # process output
   ret <- rcpp_to_mat(output_raw$ret)
