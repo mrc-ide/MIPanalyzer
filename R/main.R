@@ -808,7 +808,7 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = TRUE, report_progr
   
   # process output
   ret <- rcpp_to_mat(output_raw$ret)
-  diag(ret) <- 1
+  ret[row(ret) >= col(ret)] <- NA
   
   return(ret)
 }
