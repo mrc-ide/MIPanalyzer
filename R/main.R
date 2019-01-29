@@ -66,6 +66,9 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   loci$POS <- as.numeric(as.character(loci$POS))
   loci$QUAL <- as.numeric(as.character(loci$QUAL))
   
+  # keep vcf meta for downstream processes
+  meta <- vcf@meta
+    
   # initialise filter history
   filter_history <- data.frame(description = "raw data",
                                samples = nrow(coverage),
@@ -80,7 +83,8 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
               counts = counts,
               samples = samples,
               loci = loci,
-              filter_history = filter_history)
+              filter_history = filter_history,
+              vcfmeta = meta)
   
   # return in mipanalyzer_biallelic class
   class(ret) <- "mipanalyzer_biallelic"
