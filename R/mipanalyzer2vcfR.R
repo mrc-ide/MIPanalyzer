@@ -28,7 +28,7 @@ assignGTfrombiWSNRAF <- function(wsnraf, cutoff = 0.1){
 #' @export
 
 
-MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = cutoff){
+MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = 0.1){
   
   if(!inherits(input, c("mipanalyzer_biallelic"))){
     stop("This function only works on objects of class mipanalyzer_biallelic or mipanalyzer_multiallelic, not class ", class(mipobj))
@@ -49,6 +49,7 @@ MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = cutoff){
   
   # getFix
   fix <- as.matrix(input$loci[,c("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO")]) # must be in this order and only these
+  fix[,2] <- stringr::str_replace_all(fix[,2], "\\s", "")  
   
   # get meta
   meta <- append(input$vcfmeta, "##MIPanalyzer=This vcf was filtered and modified by the MIPanalyzer R package")
