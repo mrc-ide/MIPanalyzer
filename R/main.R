@@ -115,7 +115,7 @@ filter_samples <- function(x, sample_filter, description = "") {
   # apply filter
   x$coverage <- x$coverage[sample_filter,]
   x$counts <- x$counts[sample_filter,]
-  x$samples <- x$samples[sample_filter,]
+  x$samples <- x$samples[sample_filter,,drop = FALSE]
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -153,7 +153,7 @@ filter_loci <- function(x, locus_filter, description = "") {
   # apply filter
   x$coverage <- x$coverage[,locus_filter]
   x$counts <- x$counts[,locus_filter]
-  x$loci <- x$loci[locus_filter,]
+  x$loci <- x$loci[locus_filter,,drop = FALSE]
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -204,45 +204,48 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
 #------------------------------------------------
 #' @title Explore sample coverage prior to filtering
 #'
-#' @description See \code{filter_coverage_samples()} function first. Explore
-#'   values of \code{min_coverage} and \code{max_missing} without applying any
-#'   filtering.
+#' @description Explore what effect the \code{filter_coverage_samples()}
+#'   function will have on the data without actually applying any filters. Can
+#'   be used to set coverage thresholds.
 #' 
 #' @param x object of class \code{mipanalyzer_biallelic}.
-#' @param min_coverage any coverage value \code{< min_coverage} is replaced by \code{NA}.
-#' @param max_missing any sample with \code{> max_missing} values equal \code{NA} are dropped.
+#' @param min_coverage the coverage threshold below which data is deemed to be
+#'   low-coverage.
+#' @param max_low_coverage (percentage). Samples are not allowed to contain more
+#'   than this many low-coverage loci. In the \code{filter_coverage_samples()}
+#'   function, any sample with more than \code{max_low_coverage} low-coverage
+#'   loci will be dropped.
 #' @param breaks number of breaks spanning the range \code{[0,100]}.
 #'
 #' @export
 
 explore_filter_coverage_samples <- function(x,
                                             min_coverage = 5,
-                                            max_missing = 50,
+                                            max_low_coverage = 50,
                                             breaks = 100) {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
   assert_single_pos_int(min_coverage)
-  assert_single_pos(max_missing)
-  assert_bounded(max_missing, right = 100)
+  assert_single_pos(max_low_coverage)
+  assert_bounded(max_low_coverage, right = 100)
   
-  # get percent missing per sample
-  x$coverage[x$coverage < min_coverage] <- NA
-  percent_missing <- rowMeans(is.na(x$coverage)) * 100
-  percent_drop <- round(mean(percent_missing > max_missing)*100, digits = 2)
+  # get percent low-coverage loci per sample
+  percent_low_coverage <- rowMeans(x$coverage < min_coverage | is.na(x$coverage)) * 100
+  percent_drop <- round(mean(percent_low_coverage > max_low_coverage)*100, digits = 2)
   
   # construct main title
   main_title <- paste0("min_coverage = ", min_coverage,
-                       "\nmax_missing = ", max_missing,
+                       "\nmax_low_coverage = ", max_low_coverage,
                        "\nsamples dropped = ", percent_drop, "%")
   
   # produce plot
-  plot1 <- ggplot2::ggplot(data = data.frame(x = percent_missing)) + ggplot2::theme_bw()
+  plot1 <- ggplot2::ggplot(data = data.frame(x = percent_low_coverage)) + ggplot2::theme_bw()
   plot1 <- plot1 + ggplot2::geom_histogram(ggplot2::aes(x = x), fill = "#4575B4", breaks = seq(0,100,l = breaks))
-  plot1 <- plot1 + ggplot2::geom_vline(xintercept = max_missing, linetype = "dashed")
+  plot1 <- plot1 + ggplot2::geom_vline(xintercept = max_low_coverage, linetype = "dashed")
   plot1 <- plot1 + ggplot2::coord_cartesian(xlim = c(0,100))
   plot1 <- plot1 + ggplot2::scale_x_continuous(expand = c(0, 0)) + ggplot2::scale_y_continuous(expand = c(0, 0))
-  plot1 <- plot1 + ggplot2::xlab("% missing loci per sample")
+  plot1 <- plot1 + ggplot2::xlab("% low-coverage loci per sample")
   plot1 <- plot1 + ggplot2::ggtitle(main_title)
   
   # return plot object
@@ -253,14 +256,19 @@ explore_filter_coverage_samples <- function(x,
 #' @title Filter samples based on coverage
 #'
 #' @description Set a coverage threshold: any coverage value below this
-#'   threshold is replaced by \code{NA}. Then set a maximum percent missing loci
-#'   per sample: any sample with greater than this percentage missing loci is
-#'   dropped. Note that threshold values can be explored without applying any
-#'   filtering using the \code{explore_filter_coverage_samples()} function.
+#'   threshold is deemed to be low-coverage. Then set a maximum percent
+#'   low-coverage loci per sample: any sample with greater than this percentage
+#'   low-coverage loci is dropped. Note that threshold values can be explored
+#'   without applying any filtering using the
+#'   \code{explore_filter_coverage_samples()} function.
 #' 
 #' @param x object of class \code{mipanalyzer_biallelic}.
-#' @param min_coverage any coverage value \code{< min_coverage} is replaced by \code{NA}.
-#' @param max_missing any sample with \code{> max_missing} values equal \code{NA} are dropped.
+#' @param min_coverage the coverage threshold below which data is deemed to be
+#'   low-coverage.
+#' @param max_low_coverage any sample with more than \code{max_low_coverage}
+#'   percent of low-coverage loci will be dropped.
+#' @param replace_low_coverage (Boolean). If \code{TRUE} then any remaining
+#'   low-coverage loci will be replaced with \code{NA}.
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
@@ -268,23 +276,31 @@ explore_filter_coverage_samples <- function(x,
 
 filter_coverage_samples <- function(x,
                                     min_coverage = 5,
-                                    max_missing = 50,
+                                    max_low_coverage = 50,
+                                    replace_low_coverage = FALSE,
                                     description = "filter samples based on coverage") {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
   assert_single_pos_int(min_coverage)
-  assert_single_pos(max_missing)
-  assert_bounded(max_missing, right = 100)
+  assert_single_pos(max_low_coverage)
+  assert_bounded(max_low_coverage, right = 100)
+  assert_single_logical(replace_low_coverage)
   
-  # replace low coverage with NA and drop some samples
-  w <- which(x$coverage < min_coverage, arr.ind = TRUE)
-  x$coverage[w] <- NA
-  x$counts[w] <- NA
-  percent_missing <- rowMeans(is.na(x$coverage)) * 100
-  x$coverage <- x$coverage[percent_missing <= max_missing,]
-  x$counts <- x$counts[percent_missing <= max_missing,]
-  x$samples <- x$samples[percent_missing <= max_missing,]
+  # get percent low-coverage loci per sample
+  percent_low_coverage <- rowMeans(x$coverage < min_coverage | is.na(x$coverage)) * 100
+  
+  # drop samples with too many low-coverage loci
+  x$coverage <- x$coverage[percent_low_coverage <= max_low_coverage,]
+  x$counts <- x$counts[percent_low_coverage <= max_low_coverage,]
+  x$samples <- x$samples[percent_low_coverage <= max_low_coverage,]
+  
+  # replace low-coverage with NA
+  if (replace_low_coverage) {
+    w <- which(x$coverage < min_coverage, arr.ind = TRUE)
+    x$coverage[w] <- NA
+    x$counts[w] <- NA
+  }
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -300,46 +316,50 @@ filter_coverage_samples <- function(x,
 
 #------------------------------------------------
 #' @title Explore locus coverage prior to filtering
-#'
-#' @description See \code{filter_coverage_loci()} function first. Explore values
-#'   of \code{min_coverage} and \code{max_missing} without applying any
-#'   filtering.
+#' 
+#' @description Explore what effect the \code{filter_coverage_loci()}
+#'   function will have on the data without actually applying any filters. Can
+#'   be used to set coverage thresholds.
 #' 
 #' @param x object of class \code{mipanalyzer_biallelic}.
-#' @param min_coverage any coverage value \code{< min_coverage} is replaced by \code{NA}.
-#' @param max_missing any locus with \code{> max_missing} values equal \code{NA} are dropped.
+#' @param min_coverage the coverage threshold below which data is deemed to be
+#'   low-coverage.
+#' @param max_low_coverage (percentage). Loci are not allowed to contain more
+#'   than this many low-coverage samples. In the \code{filter_coverage_loci()}
+#'   function, any locus with more than \code{max_low_coverage} low-coverage
+#'   samples will be dropped.
 #' @param breaks number of breaks spanning the range \code{[0,100]}.
 #'
 #' @export
 
 explore_filter_coverage_loci <- function(x,
                                          min_coverage = 5,
-                                         max_missing = 50,
+                                         max_low_coverage = 50,
                                          breaks = 100) {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
   assert_single_pos_int(min_coverage)
-  assert_single_pos(max_missing)
-  assert_bounded(max_missing, right = 100)
+  assert_single_pos(max_low_coverage)
+  assert_bounded(max_low_coverage, right = 100)
   
-  # get percent missing per locus
-  x$coverage[x$coverage < min_coverage] <- NA
-  percent_missing <- colMeans(is.na(x$coverage)) * 100
-  percent_drop <- round(mean(percent_missing > max_missing)*100, digits = 2)
+  
+  # get percent low-coverage loci per sample
+  percent_low_coverage <- colMeans(x$coverage < min_coverage | is.na(x$coverage)) * 100
+  percent_drop <- round(mean(percent_low_coverage > max_low_coverage)*100, digits = 2)
   
   # construct main title
   main_title <- paste0("min_coverage = ", min_coverage,
-                       "\nmax_missing = ", max_missing,
+                       "\nmax_low_coverage = ", max_low_coverage,
                        "\nloci dropped = ", percent_drop, "%")
   
   # produce plot
-  plot1 <- ggplot2::ggplot(data = data.frame(x = percent_missing)) + ggplot2::theme_bw()
+  plot1 <- ggplot2::ggplot(data = data.frame(x = percent_low_coverage)) + ggplot2::theme_bw()
   plot1 <- plot1 + ggplot2::geom_histogram(ggplot2::aes(x = x), fill = "#4575B4", breaks = seq(0,100,l = breaks))
-  plot1 <- plot1 + ggplot2::geom_vline(xintercept = max_missing, linetype = "dashed")
+  plot1 <- plot1 + ggplot2::geom_vline(xintercept = max_low_coverage, linetype = "dashed")
   plot1 <- plot1 + ggplot2::coord_cartesian(xlim = c(0,100))
   plot1 <- plot1 + ggplot2::scale_x_continuous(expand = c(0, 0)) + ggplot2::scale_y_continuous(expand = c(0, 0))
-  plot1 <- plot1 + ggplot2::xlab("% missing samples per locus")
+  plot1 <- plot1 + ggplot2::xlab("% low-coverage samples per locus")
   plot1 <- plot1 + ggplot2::ggtitle(main_title)
   
   # return plot object
@@ -350,14 +370,19 @@ explore_filter_coverage_loci <- function(x,
 #' @title Filter loci based on coverage
 #'
 #' @description Set a coverage threshold: any coverage value below this
-#'   threshold is replaced by \code{NA}. Then set a maximum percent missing samples
-#'   per locus: any locus with greater than this percentage missing samples is
-#'   dropped. Note that threshold values can be explored without applying any
-#'   filtering using the \code{explore_filter_coverage_loci()} function.
-#' 
+#'   threshold is deemed to be low-coverage. Then set a maximum percent
+#'   low-coverage samples per locus: any locus with greater than this percentage
+#'   low-coverage samples is dropped. Note that threshold values can be explored
+#'   without applying any filtering using the
+#'   \code{explore_filter_coverage_loci()} function.
+#'
 #' @param x object of class \code{mipanalyzer_biallelic}.
-#' @param min_coverage any coverage value \code{< min_coverage} is replaced by \code{NA}.
-#' @param max_missing any sample with \code{> max_missing} values equal \code{NA} are dropped.
+#' @param min_coverage the coverage threshold below which data is deemed to be
+#'   low-coverage.
+#' @param max_low_coverage any locus with more than \code{max_low_coverage}
+#'   percent of low-coverage samples will be dropped.
+#' @param replace_low_coverage (Boolean). If \code{TRUE} then any remaining
+#'   low-coverage loci will be replaced with \code{NA}.
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
@@ -365,23 +390,31 @@ explore_filter_coverage_loci <- function(x,
 
 filter_coverage_loci <- function(x,
                                  min_coverage = 5,
-                                 max_missing = 50,
+                                 max_low_coverage = 50,
+                                 replace_low_coverage = FALSE,
                                  description = "filter loci based on coverage") {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
   assert_single_pos_int(min_coverage)
-  assert_single_pos(max_missing)
-  assert_bounded(max_missing, right = 100)
+  assert_single_pos(max_low_coverage)
+  assert_bounded(max_low_coverage, right = 100)
+  assert_single_logical(replace_low_coverage)
   
-  # replace low coverage with NA and drop some samples
-  w <- which(x$coverage < min_coverage, arr.ind = TRUE)
-  x$coverage[w] <- NA
-  x$counts[w] <- NA
-  percent_missing <- colMeans(is.na(x$coverage)) * 100
-  x$coverage <- x$coverage[,percent_missing <= max_missing]
-  x$counts <- x$counts[,percent_missing <= max_missing]
-  x$loci <- x$loci[percent_missing <= max_missing,]
+  # get percent low-coverage loci per sample
+  percent_low_coverage <- colMeans(x$coverage < min_coverage | is.na(x$coverage)) * 100
+  
+  # drop loci with too many low-coverage samples
+  x$coverage <- x$coverage[,percent_low_coverage <= max_low_coverage]
+  x$counts <- x$counts[,percent_low_coverage <= max_low_coverage]
+  x$loci <- x$loci[percent_low_coverage <= max_low_coverage,]
+  
+  # replace low-coverage with NA
+  if (replace_low_coverage) {
+    w <- which(x$coverage < min_coverage, arr.ind = TRUE)
+    x$coverage[w] <- NA
+    x$counts[w] <- NA
+  }
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -480,7 +513,7 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
   
   # get basic quantities
   nsamp <- nrow(x$samples)
-  chrom_levels <- levels(x$loci$CHROM)
+  chrom_levels <- unique(x$loci$CHROM)
   nchrom <- length(chrom_levels)
   
   # get within-sample allele frequencies
@@ -492,7 +525,7 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
     
     # get correlation matrix between SNPs
     w <- which(x$loci$CHROM == chrom_levels[i])
-    cormat <- suppressWarnings(cor(wsaf[,w], use = "pairwise.complete.obs"))
+    cormat <- suppressWarnings(cor(wsaf[,w,drop = FALSE], use = "pairwise.complete.obs"))
     cormat_na <- apply(cormat, 1, function(x) all(is.na(x)))
     cormat[cormat < cutoff] <- 0
     
@@ -671,6 +704,98 @@ plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
 }
 
 #------------------------------------------------
+#' @title Plot PCA loadings
+#'
+#' @description Plot loading values of PCA against genomic position.
+#'
+#' @param pca output of \code{pca_wsaf()} function.
+#' @param component which component to plot.
+#' @param chrom the chromosome for each loading value.
+#' @param pos the genomic position for each loading value.
+#' @param locus_type defines the colour of each bar.
+#' @param y_buffer (percent). A buffer added to the bottom of each y-axis,
+#'   making room for other annotations to be added.
+#' @param y_scale multiple loadings by \code{10^y_scale}.
+#'
+#' @export
+
+plot_pca_loadings <- function(pca, component = 1, chrom, pos, locus_type = NULL, y_buffer = 0, y_scale = 3) {
+  
+  # check inputs
+  assert_custom_class(pca, "prcomp")
+  assert_single_pos_int(component)
+  assert_leq(component, nrow(pca$loadings))
+  assert_pos_int(chrom)
+  assert_length(chrom, nrow(pca$loadings))
+  assert_pos_int(pos)
+  assert_length(pos, nrow(pca$loadings))
+  if (is.null(locus_type)) {
+    locus_type <- rep("", nrow(pca$loadings))
+  }
+  assert_length(locus_type, nrow(pca$loadings))
+  assert_single_pos(y_buffer, zero_allowed = TRUE)
+  assert_bounded(y_buffer, right = 100)
+  assert_single_int(y_scale)
+  
+  # extract loadings
+  y <- pca$loadings[,component] * 10^y_scale
+  L <- length(y)
+  
+  # get y ticks and limits
+  y_ticks <- pretty(y)
+  y_max <- max(y_ticks)
+  y_min <- -y_max*y_buffer/100
+  
+  # load P.falciparum chromosome lengths
+  df_chrom_lengths <- Pf_chrom_lengths()
+  
+  # make dataframes for drawing clustom gridlines
+  df_hlines = df_chrom_lengths[rep(1:14, each = length(y_ticks)),]
+  df_hlines$y = rep(y_ticks, times = 14)
+  
+  df_vlines = df_chrom_lengths[rep(1:14, each = 16),]
+  df_vlines$x = rep(1:16*2e5 + 1, times = 14)
+  df_vlines <- subset(df_vlines, df_vlines$x < df_vlines$length)
+  
+  # create plotting dataframe
+  df <- data.frame(chrom = chrom,
+                   pos = pos,
+                   locus_type = locus_type,
+                   y = y)
+  
+  Pf_chrom_lengths()
+  
+  # produce basic plot
+  plot1 <- ggplot(df) + facet_wrap(~chrom, ncol = 1)
+  plot1 <- plot1 + theme(strip.background = element_blank(),
+                         strip.text.x = element_blank(),
+                         panel.grid.major = element_blank(),
+                         panel.grid.minor = element_blank(),
+                         panel.background = element_blank())
+  
+  # add rectangles and grid lines
+  plot1 <- plot1 + geom_rect(aes(xmin = 1, xmax = length, ymin = 0, ymax = y_max), col = grey(0.7), size = 0.2, fill = grey(0.95), data = df_chrom_lengths)
+  plot1 <- plot1 + geom_segment(aes(x = 1, y = y, xend = length, yend = y), col = grey(0.8), size = 0.1, data = df_hlines)
+  plot1 <- plot1 + geom_segment(aes(x = x, y = 0, xend = x, yend = y_max), col = grey(0.8), size = 0.1, data = df_vlines)
+  
+  # set y scale
+  plot1 <- plot1 + scale_y_continuous(breaks = y_ticks, limits = c(y_min,y_max))
+  
+  # add data
+  plot1 <- plot1 + geom_segment(aes(x = pos, y = 0, xend = pos, yend = y, col = locus_type))
+  
+  # labels and legends
+  ylab_title <- paste0("PC", component, " loadings")
+  if (y_scale != 0) {
+    ylab_title <- substitute(x %*% 10^y, list(x = ylab_title, y = y_scale))
+  }
+  plot1 <- plot1 + xlab("position") + ylab(ylab_title)
+  
+  # return
+  return(plot1)
+}
+
+#------------------------------------------------
 #' @title PCoA of genomic distances between samples
 #'
 #' @description Conduct principal coordinate analysis (PCoA) on a matrix of
@@ -811,9 +936,70 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = TRUE, report_progr
   output_raw <- inbreeding_mle_cpp(args, args_functions, args_progress)
   
   # process output
-  ret <- rcpp_to_mat(output_raw$ret)
+  ret_ml <- rcpp_to_mat(output_raw$ret_ml)
+  ret_ml[row(ret_ml) >= col(ret_ml)] <- NA
+  ret_all <- rcpp_to_array(output_raw$ret_all)
+  
+  # return list
+  ret <- list(mle = ret_ml,
+              loglike = ret_all)
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Get identity by state (IBS) distance
+#'
+#' @description Get identity by state (IBS) distance, computed as the proportion
+#'   of sites that are identical between samples. If \code{ignore_het = TRUE}
+#'   then heterozygous sites are ignored, otherwise the major strain is called
+#'   at every locus.
+#'
+#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param ignore_het whether to ignore heterzygous comparisons, or alternatively
+#'   call the major allele at every locus (see details).
+#' @param report_progress if \code{TRUE} then a progress bar is printed to the
+#'   console.
+#'
+#' @export
+
+get_IBS_distance <- function(x, ignore_het = TRUE, report_progress = TRUE) {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_single_logical(ignore_het)
+  assert_single_logical(report_progress)
+  
+  # get basic quantities
+  nsamp <- nrow(x$samples)
+  
+  # get within-sample allele frequencies
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # deal with heterozygous sites
+  if (ignore_het) {
+    wsaf[wsaf != 0 & wsaf != 1] <- NA
+  } else {
+    wsaf <- round(wsaf)
+  }
+  
+  # initialise progress bar
+  if (report_progress) {
+    pbar <- txtProgressBar(0, nsamp, style = 3)
+  }
+  
+  # compute all pairwise IBS
+  ret <- matrix(NA, nsamp, nsamp)
+  for (i in 1:nsamp) {
+    ret[i,] <- rowMeans(outer(rep(1,nsamp), wsaf[i,]) == wsaf, na.rm = TRUE)
+    
+    # update progress bar
+    if (report_progress) {
+      setTxtProgressBar(pbar, i)
+    }
+  }
   ret[row(ret) >= col(ret)] <- NA
   
+  # return distance matrix
   return(ret)
 }
 
@@ -917,4 +1103,19 @@ dummy1 <- function(x = 1:5) {
   return(ret)
 }
 
+#------------------------------------------------
+#' @title Get dataframe of P.falciparum chromosome lengths
+#'
+#' @description Get dataframe of P.falciparum chromosome lengths
+#'
+#' @export
 
+Pf_chrom_lengths <- function() {
+  ret <- data.frame(chrom = 1:14,
+                    length = c(643292, 947102, 1060087,
+                               1204112, 1343552, 1418244,
+                               1501717, 1419563, 1541723,
+                               1687655, 2038337, 2271478,
+                               2895605, 3291871))
+  return(ret)
+}

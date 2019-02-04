@@ -62,7 +62,8 @@ Rcpp::List inbreeding_mle_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::
   
   // create objects for storing results
   vector<double> loglike_vec(nf);
-  vector<vector<double>> ret(n, vector<double>(n));
+  vector<vector<vector<double>>> ret_all(n, vector<vector<double>>(n, vector<double>(nf)));
+  vector<vector<double>> ret_ml(n, vector<double>(n));
   
   // loop through all pairwise samples
   for (int i1=0; i1<(n-1); ++i1) {
@@ -92,12 +93,15 @@ Rcpp::List inbreeding_mle_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::
         loglike_vec[k] = loglike;
       }
       
+      // store all values
+      ret_all[i1][i2] = loglike_vec;
+      
       // store maximum likelihood f
       double best_loglike = loglike_vec[0];
       for (int k=1; k<nf; ++k) {
         if (loglike_vec[k] > best_loglike) {
           best_loglike = loglike_vec[k];
-          ret[i1][i2] = f[k];
+          ret_ml[i1][i2] = f[k];
         }
       }
       
@@ -105,6 +109,6 @@ Rcpp::List inbreeding_mle_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::
   }  // end i1 loop
   
   // return as Rcpp object
-  return Rcpp::List::create(Rcpp::Named("ret") = ret);
+  return Rcpp::List::create(Rcpp::Named("ret_all") = ret_all, Rcpp::Named("ret_ml") = ret_ml);
   
 }

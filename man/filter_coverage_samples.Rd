@@ -4,23 +4,30 @@
 \alias{filter_coverage_samples}
 \title{Filter samples based on coverage}
 \usage{
-filter_coverage_samples(x, min_coverage = 5, max_missing = 50,
+filter_coverage_samples(x, min_coverage = 5, max_low_coverage = 50,
+  replace_low_coverage = FALSE,
   description = "filter samples based on coverage")
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}
 
-\item{min_coverage}{any coverage value \code{< min_coverage} is replaced by \code{NA}.}
+\item{min_coverage}{the coverage threshold below which data is deemed to be
+low-coverage.}
 
-\item{max_missing}{any sample with \code{> max_missing} values equal \code{NA} are dropped.}
+\item{max_low_coverage}{any sample with more than \code{max_low_coverage}
+percent of low-coverage loci will be dropped.}
+
+\item{replace_low_coverage}{(Boolean). If \code{TRUE} then any remaining
+low-coverage loci will be replaced with \code{NA}.}
 
 \item{description}{brief description of the filter, to be saved in the filter
 history.}
 }
 \description{
 Set a coverage threshold: any coverage value below this
-  threshold is replaced by \code{NA}. Then set a maximum percent missing loci
-  per sample: any sample with greater than this percentage missing loci is
-  dropped. Note that threshold values can be explored without applying any
-  filtering using the \code{explore_filter_coverage_samples()} function.
+  threshold is deemed to be low-coverage. Then set a maximum percent
+  low-coverage loci per sample: any sample with greater than this percentage
+  low-coverage loci is dropped. Note that threshold values can be explored
+  without applying any filtering using the
+  \code{explore_filter_coverage_samples()} function.
 }

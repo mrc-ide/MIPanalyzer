@@ -14,6 +14,14 @@ rcpp_to_mat <- function(x) {
   return(ret)
 }
 
+# -----------------------------------
+# takes list format returned from Rcpp and converts to three-dimensional array.
+#' @noRd
+rcpp_to_array <- function(x) {
+  ret <- array(unlist(x), dim = c(length(x[[1]][[1]]), length(x), length(x[[1]])))
+  return(ret)
+}
+
 #------------------------------------------------
 # return 95% quantile
 #' @noRd

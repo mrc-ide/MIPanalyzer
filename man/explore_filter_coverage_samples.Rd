@@ -4,20 +4,24 @@
 \alias{explore_filter_coverage_samples}
 \title{Explore sample coverage prior to filtering}
 \usage{
-explore_filter_coverage_samples(x, min_coverage = 5, max_missing = 50,
-  breaks = 100)
+explore_filter_coverage_samples(x, min_coverage = 5,
+  max_low_coverage = 50, breaks = 100)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}
 
-\item{min_coverage}{any coverage value \code{< min_coverage} is replaced by \code{NA}.}
+\item{min_coverage}{the coverage threshold below which data is deemed to be
+low-coverage.}
 
-\item{max_missing}{any sample with \code{> max_missing} values equal \code{NA} are dropped.}
+\item{max_low_coverage}{(percentage). Samples are not allowed to contain more
+than this many low-coverage loci. In the \code{filter_coverage_samples()}
+function, any sample with more than \code{max_low_coverage} low-coverage
+loci will be dropped.}
 
 \item{breaks}{number of breaks spanning the range \code{[0,100]}.}
 }
 \description{
-See \code{filter_coverage_samples()} function first. Explore
-  values of \code{min_coverage} and \code{max_missing} without applying any
-  filtering.
+Explore what effect the \code{filter_coverage_samples()}
+  function will have on the data without actually applying any filters. Can
+  be used to set coverage thresholds.
 }
