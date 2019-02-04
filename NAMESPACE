@@ -2,6 +2,7 @@
 
 S3method(print,mipanalyzer_biallelic)
 S3method(summary,mipanalyzer_biallelic)
+export(MIPanalyzerbi2vcfR)
 export(dummy1)
 export(explore_filter_coverage_loci)
 export(explore_filter_coverage_samples)
