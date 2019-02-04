@@ -5,7 +5,14 @@
 
 
 #' @title Assign the GT calls from the NONREFERENT WSAF
-#' @return A GT matrix
+#' @param wsnraf A within-sample non-referent allele frequncy from biallelic SNPs as a \class{matrix}.  
+#' @param cutoff The allele-frequency cutoff to determine genotype calls
+#' @description This function takes in the within-sample non-referent allele frequency matrix and converts it to a (diploid) genotype matrix. The genotype matrix is 
+#' character matrix with "0/0", "0/1", "1/1" representing the homozygote referent, heterozygote, and homozygote alternative calls. The genotype call is 
+#' determined by the allele frequency and the \param{cutoff} set by the user. Specifically, an allele frequency less than the cutoff or greater than \code{1-\param{cutoff}} correspond to a
+#' homozygote referent and homozygote alternative call, respectively. All other allele-frequencies will be converted to the heterozygote call \code{"0/1"}. 
+#' 
+#' @return A GT matrix as a \class{matrix}.
 #' not exported
 
 assignGTfrombiWSNRAF <- function(wsnraf, cutoff = 0.1){
@@ -28,7 +35,7 @@ assignGTfrombiWSNRAF <- function(wsnraf, cutoff = 0.1){
 #' @export
 
 
-MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = cutoff){
+MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = 0.1){
   
   if(!inherits(input, c("mipanalyzer_biallelic"))){
     stop("This function only works on objects of class mipanalyzer_biallelic or mipanalyzer_multiallelic, not class ", class(mipobj))
@@ -49,6 +56,7 @@ MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = cutoff){
   
   # getFix
   fix <- as.matrix(input$loci[,c("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO")]) # must be in this order and only these
+  fix[,2] <- stringr::str_replace_all(fix[,2], "\\s", "")  
   
   # get meta
   meta <- append(input$vcfmeta, "##MIPanalyzer=This vcf was filtered and modified by the MIPanalyzer R package")
