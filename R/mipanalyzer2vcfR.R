@@ -5,7 +5,14 @@
 
 
 #' @title Assign the GT calls from the NONREFERENT WSAF
-#' @return A GT matrix
+#' @param wsnraf A within-sample non-referent allele frequncy from biallelic SNPs as a \class{matrix}.  
+#' @param cutoff The allele-frequency cutoff to determine genotype calls
+#' @description This function takes in the within-sample non-referent allele frequency matrix and converts it to a (diploid) genotype matrix. The genotype matrix is 
+#' character matrix with "0/0", "0/1", "1/1" representing the homozygote referent, heterozygote, and homozygote alternative calls. The genotype call is 
+#' determined by the allele frequency and the \param{cutoff} set by the user. Specifically, an allele frequency less than the cutoff or greater than \code{1-\param{cutoff}} correspond to a
+#' homozygote referent and homozygote alternative call, respectively. All other allele-frequencies will be converted to the heterozygote call \code{"0/1"}. 
+#' 
+#' @return A GT matrix as a \class{matrix}.
 #' not exported
 
 assignGTfrombiWSNRAF <- function(wsnraf, cutoff = 0.1){
