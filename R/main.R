@@ -6,6 +6,36 @@
 NULL
 
 #------------------------------------------------
+#' @title Load system file
+#'
+#' @description Load a file from within the inst/extdata folder of the
+#'   MIPanalyzer package. File extension must be one of .csv, .txt, or .rds.
+#'
+#' @param name the name of a file within the inst/extdata folder.
+#'
+#' @export
+
+mipanalyzer_file <- function(name) {
+  
+  # check that valid file extension
+  ext <- strsplit(name, "\\.")[[1]]
+  ext <- ext[length(ext)]
+  assert_in(ext, c("txt", "csv", "rds"), message = "file extension not valid")
+  
+  # get full file path
+  name_full <- system.file("extdata/", name, package='MIPanalyzer', mustWork = TRUE)
+  
+  # read in file
+  if (ext == "rds") {
+    ret <- readRDS(name_full)
+  } else {
+    ret <- fread(name_full, data.table = FALSE)
+  }
+  
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Convert vcf to biallelic mipanalyzer data class
 #'
 #' @description Convert vcf to biallelic mipanalyzer data class.
@@ -487,6 +517,91 @@ get_wsaf <- function(x, impute = TRUE, FUN = median, ...) {
 }
 
 #------------------------------------------------
+#' @title Get great circle distance between spatial points
+#'
+#' @description Get great circle distance between spatial points.
+#' 
+#' @param lat vector of latitudes.
+#' @param long vector of longitudes.
+#'
+#' @export
+
+get_spatial_distance <- function(lat, long) {
+  
+  # check inputs
+  assert_vector(lat)
+  assert_numeric(lat)
+  assert_vector(long)
+  assert_numeric(long)
+  
+  # calculate distance matrix
+  ret <- apply(cbind(lat, long), 1, function(y) {lonlat_to_bearing(lat, long, y[1], y[2])$gc_dist})
+  diag(ret) <- 0
+  
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title Calculate great circle distance and bearing between coordinates
+#'
+#' @description Calculate great circle distance and bearing between spatial
+#'   coordinates.
+#'
+#' @param origin_lon The origin longitude
+#' @param origin_lat The origin latitude
+#' @param dest_lon The destination longitude
+#' @param dest_lat The destination latitude
+#'
+#' @export
+#' @examples
+#' # one degree longitude should equal approximately 111km at the equator
+#' lonlat_to_bearing(0, 0, 1, 0)
+
+lonlat_to_bearing <- function(origin_lon, origin_lat, dest_lon, dest_lat) {
+  
+  # check inputs
+  assert_vector(origin_lon)
+  assert_numeric(origin_lon)
+  assert_vector(origin_lat)
+  assert_numeric(origin_lat)
+  assert_vector(dest_lon)
+  assert_numeric(dest_lon)
+  assert_vector(dest_lat)
+  assert_numeric(dest_lat)
+  
+  # convert input arguments to radians
+  origin_lon <- origin_lon*2*pi/360
+  origin_lat <- origin_lat*2*pi/360
+  dest_lon <- dest_lon*2*pi/360
+  dest_lat <- dest_lat*2*pi/360
+  
+  # get change in lon
+  delta_lon <- dest_lon - origin_lon
+  
+  # calculate bearing
+  bearing <- atan2(sin(delta_lon)*cos(dest_lat), cos(origin_lat)*sin(dest_lat)-sin(origin_lat)*cos(dest_lat)*cos(delta_lon))
+  
+  # calculate great circle angle. Use temporary variable to avoid acos(>1) or 
+  # acos(<0), which can happen due to underflow issues
+  tmp <- sin(origin_lat)*sin(dest_lat) + cos(origin_lat)*cos(dest_lat)*cos(delta_lon)
+  tmp <- ifelse(tmp > 1, 1, tmp)
+  tmp <- ifelse(tmp < 0, 0, tmp)
+  gc_angle <- acos(tmp)
+  
+  # convert bearing from radians to degrees measured clockwise from due north,
+  # and convert gc_angle to great circle distance via radius of earth (km)
+  bearing <- bearing*360/(2*pi)
+  bearing <- (bearing+360)%%360
+  earth_rad <- 6371
+  gc_dist <- earth_rad*gc_angle
+  
+  # return list
+  ret <-list(bearing = bearing,
+             gc_dist = gc_dist)
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Get genomic distance between samples
 #'
 #' @description Get genomic distance between samples using a distance metric
@@ -561,16 +676,22 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
 
 #------------------------------------------------
 #' @title PCA of within-sample allele frequencies
-#'
+#' 
 #' @description Conduct principal components analysis (PCA) on a matrix of
 #'   within-sample allele frequencies (WSAF). Missing values must have been
 #'   already imputed. Output includes the raw components, the variance in the
 #'   data explained by each component, and the loadings of each component also
 #'   returned.
-#'  
+#' 
+#' @details Contributions of each variable are computed from the loading values
+#'   (stored as "rotation" within the \code{prcomp} object). The percent
+#'   contribution of a variable is defined as the absolute loading value for
+#'   this variable, divided by the sum of loadings over all variables and
+#'   multiplied by 100.
+#' 
 #' @param x a matrix of within-sample allele frequencies, as produced by the
 #'   function \code{get_wsaf()}.
-#'
+#' 
 #' @return Invisibly returns a list of class `prcomp` with the following 
 #'   components
 #'   \itemize{
@@ -585,7 +706,8 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
 #'       multiplied by the rotation matrix). Hence, \code{cov(x)} is the
 #'       diagonal matrix \code{diag(sdev^2)}.}
 #'       \item{"var"}{ the variance in the data explained by each component.}
-#'       \item{"loadings"}{ the loadings of each component.}
+#'       \item{"contribution"}{ the percent contribution of a variable (i.e. a
+#'       locus) to the overall variation.}
 #'       }
 #' @importFrom stats prcomp
 #' @export
@@ -605,9 +727,9 @@ pca_wsaf <- function(x) {
   # compute variance explained
   pca$var <- (pca$sdev ^ 2) / sum(pca$sdev ^ 2) * 100
   
-  # compute loadings from rotations
-  pca$loadings <- abs(pca$rotation)
-  pca$loadings <- sweep(pca$loadings, 2, colSums(pca$loadings), "/")
+  # compute percent contribution of each locus
+  pca$contribution <- abs(pca$rotation)
+  pca$contribution <- sweep(pca$contribution, 2, colSums(pca$contribution), "/") * 100
   
   # return
   return(pca)
@@ -704,42 +826,40 @@ plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
 }
 
 #------------------------------------------------
-#' @title Plot PCA loadings
+#' @title Plot PCA contribution of each variable
 #'
-#' @description Plot loading values of PCA against genomic position.
+#' @description Plot PCA contribution of each variable.
 #'
 #' @param pca output of \code{pca_wsaf()} function.
 #' @param component which component to plot.
-#' @param chrom the chromosome for each loading value.
-#' @param pos the genomic position for each loading value.
+#' @param chrom the chromosome corresponding to each contribution value.
+#' @param pos the genomic position corresponding each contribution value.
 #' @param locus_type defines the colour of each bar.
 #' @param y_buffer (percent). A buffer added to the bottom of each y-axis,
 #'   making room for other annotations to be added.
-#' @param y_scale multiple loadings by \code{10^y_scale}.
 #'
 #' @export
 
-plot_pca_loadings <- function(pca, component = 1, chrom, pos, locus_type = NULL, y_buffer = 0, y_scale = 3) {
+plot_pca_contribution <- function(pca, component = 1, chrom, pos, locus_type = NULL, y_buffer = 0) {
   
   # check inputs
   assert_custom_class(pca, "prcomp")
+  n <- nrow(pca$contribution)
   assert_single_pos_int(component)
-  assert_leq(component, nrow(pca$loadings))
+  assert_leq(component, n)
   assert_pos_int(chrom)
-  assert_length(chrom, nrow(pca$loadings))
+  assert_length(chrom, n)
   assert_pos_int(pos)
-  assert_length(pos, nrow(pca$loadings))
+  assert_length(pos, n)
   if (is.null(locus_type)) {
-    locus_type <- rep("", nrow(pca$loadings))
+    locus_type <- rep("", n)
   }
-  assert_length(locus_type, nrow(pca$loadings))
+  assert_length(locus_type, n)
   assert_single_pos(y_buffer, zero_allowed = TRUE)
   assert_bounded(y_buffer, right = 100)
-  assert_single_int(y_scale)
   
-  # extract loadings
-  y <- pca$loadings[,component] * 10^y_scale
-  L <- length(y)
+  # extract contributions
+  y <- pca$contribution[,component]
   
   # get y ticks and limits
   y_ticks <- pretty(y)
@@ -763,8 +883,6 @@ plot_pca_loadings <- function(pca, component = 1, chrom, pos, locus_type = NULL,
                    locus_type = locus_type,
                    y = y)
   
-  Pf_chrom_lengths()
-  
   # produce basic plot
   plot1 <- ggplot(df) + facet_wrap(~chrom, ncol = 1)
   plot1 <- plot1 + theme(strip.background = element_blank(),
@@ -785,10 +903,7 @@ plot_pca_loadings <- function(pca, component = 1, chrom, pos, locus_type = NULL,
   plot1 <- plot1 + geom_segment(aes(x = pos, y = 0, xend = pos, yend = y, col = locus_type))
   
   # labels and legends
-  ylab_title <- paste0("PC", component, " loadings")
-  if (y_scale != 0) {
-    ylab_title <- substitute(x %*% 10^y, list(x = ylab_title, y = y_scale))
-  }
+  ylab_title <- paste0("PC", component, " contributions")
   plot1 <- plot1 + xlab("position") + ylab(ylab_title)
   
   # return
@@ -1076,31 +1191,55 @@ sim_biallelic <- function(COI = 3,
 }
 
 #------------------------------------------------
-#' @title Dummy function
+#' @title Produce ggplot map
 #'
-#' @description Dummy function
-#' 
-#' @param x nubers to square.
+#' @description Produce ggplot map.
+#'
+#' @param x_limits longitude limits of map.
+#' @param y_limits latitude limits of map.
+#' @param col_country fill colour of countries.
+#' @param col_country_border colour of country borders.
+#' @param size_country_border size of country borders.
+#' @param col_sea fill colour of sea.
 #'
 #' @export
 
-dummy1 <- function(x = 1:5) {
+plot_map <- function(x_limits = c(12, 35),
+                     y_limits = c(-13,5),
+                     col_country = grey(0.3),
+                     col_country_border = grey(0.5),
+                     size_country_border = 0.5,
+                     col_sea = grey(0.1)) {
   
-  # print message to console
-  message("running R dummy1 function")
+  # check inputs
+  assert_vector(x_limits)
+  assert_length(x_limits, 2)
+  assert_numeric(x_limits)
+  assert_vector(y_limits)
+  assert_length(y_limits, 2)
+  assert_numeric(y_limits)
   
-  # get arguments in list form
-  args <- list(x = x)
+  # load shapefiles
+  country_borders <- mipanalyzer_file("country_borders.rds")
   
-  # run C++ function with these arguments
-  output_raw <- dummy1_cpp(args)
+  # basic plot
+  plot1 <- ggplot() + theme_bw() + theme(panel.background = element_rect(fill = col_sea),
+                                         panel.grid.major = element_blank(),
+                                         panel.grid.minor = element_blank())
   
-  # some optional processing of output
-  message("processing output")
-  ret <- output_raw$x_squared
+  # add country borders
+  for (i in 1:length(country_borders)) {
+    plot1 <- plot1 + geom_polygon(aes(long, lat, group = group),
+                                  size = size_country_border, color = col_country_border,
+                                  fill = col_country, data = country_borders[[i]])
+  }
+  
+  # limits and labels
+  plot1 <- plot1 + xlab("longitude") + ylab("latitude")
+  plot1 <- plot1 + coord_cartesian(xlim = x_limits, ylim = y_limits) 
   
   # return
-  return(ret)
+  return(plot1)
 }
 
 #------------------------------------------------

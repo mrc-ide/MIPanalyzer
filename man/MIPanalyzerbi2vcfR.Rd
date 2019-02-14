@@ -4,7 +4,7 @@
 \alias{MIPanalyzerbi2vcfR}
 \title{Convert a MIPanalyzer Biallelic Object to a vcfR object}
 \usage{
-MIPanalyzerbi2vcfR(input = NULL, cutoff = cutoff)
+MIPanalyzerbi2vcfR(input = NULL, cutoff = 0.1)
 }
 \arguments{
 \item{input}{is of class \code{mipanalyzer_biallelic}}

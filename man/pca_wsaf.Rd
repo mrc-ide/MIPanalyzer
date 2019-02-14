@@ -25,7 +25,8 @@ Invisibly returns a list of class `prcomp` with the following
       multiplied by the rotation matrix). Hence, \code{cov(x)} is the
       diagonal matrix \code{diag(sdev^2)}.}
       \item{"var"}{ the variance in the data explained by each component.}
-      \item{"loadings"}{ the loadings of each component.}
+      \item{"contribution"}{ the percent contribution of a variable (i.e. a
+      locus) to the overall variation.}
       }
 }
 \description{
@@ -34,4 +35,11 @@ Conduct principal components analysis (PCA) on a matrix of
   already imputed. Output includes the raw components, the variance in the
   data explained by each component, and the loadings of each component also
   returned.
+}
+\details{
+Contributions of each variable are computed from the loading values
+  (stored as "rotation" within the \code{prcomp} object). The percent
+  contribution of a variable is defined as the absolute loading value for
+  this variable, divided by the sum of loadings over all variables and
+  multiplied by 100.
 }

@@ -20,7 +20,8 @@ Imports:
     plotly,
     tibble,
     ggplot2,
-    ape
+    ape,
+    stringr
 RoxygenNote: 6.1.1
 SystemRequirements: C++11
 Suggests: 
