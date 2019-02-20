@@ -903,7 +903,7 @@ plot_pca_contribution <- function(pca, component = 1, chrom, pos, locus_type = N
   plot1 <- plot1 + geom_segment(aes(x = pos, y = 0, xend = pos, yend = y, col = locus_type))
   
   # labels and legends
-  ylab_title <- paste0("PC", component, " contributions")
+  ylab_title <- paste0("PC", component, " contributions (%)")
   plot1 <- plot1 + xlab("position") + ylab(ylab_title)
   
   # return
@@ -1016,7 +1016,7 @@ plot_pcoa <- function(pcoa, num_components = 2, col = NULL, col_palette = NULL) 
 #'
 #' @export
 
-inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = TRUE, report_progress = TRUE) {
+inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = FALSE, report_progress = TRUE) {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
