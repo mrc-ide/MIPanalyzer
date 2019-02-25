@@ -21,7 +21,8 @@ Imports:
     tibble,
     ggplot2,
     ape,
-    stringr
+    stringr,
+    rworldmap
 RoxygenNote: 6.1.1
 SystemRequirements: C++11
 Suggests: 

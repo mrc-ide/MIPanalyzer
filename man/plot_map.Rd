@@ -6,7 +6,8 @@
 \usage{
 plot_map(x_limits = c(12, 35), y_limits = c(-13, 5),
   col_country = grey(0.3), col_country_border = grey(0.5),
-  size_country_border = 0.5, col_sea = grey(0.1))
+  size_country_border = 0.5, col_sea = grey(0.1),
+  resolution = "coarse")
 }
 \arguments{
 \item{x_limits}{longitude limits of map.}
@@ -20,6 +21,9 @@ plot_map(x_limits = c(12, 35), y_limits = c(-13, 5),
 \item{size_country_border}{size of country borders.}
 
 \item{col_sea}{fill colour of sea.}
+
+\item{resolution}{the resolution of the underlying map. Must be one of
+"coarse", "low", "less", "islands", "li", "high".}
 }
 \description{
 Produce ggplot map.

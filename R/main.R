@@ -477,7 +477,7 @@ plot_coverage <- function(x) {
   plot1 <- plot1 + ggplot2::geom_raster(aes(x = Var1, y = Var2, fill = value))
   plot1 <- plot1 + ggplot2::scale_fill_viridis_c(option = "plasma", name = "log(coverage)")
   plot1 <- plot1 + ggplot2::theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.ticks = element_blank())
-  plot1 <- plot1 + ggplot2::xlab("locus") + ggplot2::ylab("sample")
+  plot1 <- plot1 + ggplot2::xlab("sample") + ggplot2::ylab("locus")
   
   return(plot1)
 }
@@ -1201,7 +1201,10 @@ sim_biallelic <- function(COI = 3,
 #' @param col_country_border colour of country borders.
 #' @param size_country_border size of country borders.
 #' @param col_sea fill colour of sea.
+#' @param resolution the resolution of the underlying map. Must be one of
+#'   "coarse", "low", "less", "islands", "li", "high".
 #'
+#' @importFrom rworldmap getMap
 #' @export
 
 plot_map <- function(x_limits = c(12, 35),
@@ -1209,7 +1212,8 @@ plot_map <- function(x_limits = c(12, 35),
                      col_country = grey(0.3),
                      col_country_border = grey(0.5),
                      size_country_border = 0.5,
-                     col_sea = grey(0.1)) {
+                     col_sea = grey(0.1),
+                     resolution = "coarse") {
   
   # check inputs
   assert_vector(x_limits)
@@ -1218,9 +1222,10 @@ plot_map <- function(x_limits = c(12, 35),
   assert_vector(y_limits)
   assert_length(y_limits, 2)
   assert_numeric(y_limits)
+  assert_in(resolution, c("coarse", "low", "less", "islands", "li", "high"))
   
-  # load shapefiles
-  country_borders <- mipanalyzer_file("country_borders.rds")
+  # load country shapefiles
+  world_map <- getMap(resolution = resolution)
   
   # basic plot
   plot1 <- ggplot() + theme_bw() + theme(panel.background = element_rect(fill = col_sea),
@@ -1228,11 +1233,9 @@ plot_map <- function(x_limits = c(12, 35),
                                          panel.grid.minor = element_blank())
   
   # add country borders
-  for (i in 1:length(country_borders)) {
-    plot1 <- plot1 + geom_polygon(aes(long, lat, group = group),
-                                  size = size_country_border, color = col_country_border,
-                                  fill = col_country, data = country_borders[[i]])
-  }
+  plot1 <- plot1 + geom_polygon(aes(long, lat, group = group),
+                                size = size_country_border, color = col_country_border,
+                                fill = col_country, data = world_map)
   
   # limits and labels
   plot1 <- plot1 + xlab("longitude") + ylab("latitude")
