@@ -27,4 +27,7 @@ RoxygenNote: 6.1.1
 SystemRequirements: C++11
 Suggests: 
     testthat,
-    covr
+    covr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
