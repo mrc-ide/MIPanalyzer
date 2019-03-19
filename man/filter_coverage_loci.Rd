@@ -9,7 +9,8 @@ filter_coverage_loci(x, min_coverage = 5, max_low_coverage = 50,
   description = "filter loci based on coverage")
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_biallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 
 \item{min_coverage}{the coverage threshold below which data is deemed to be
 low-coverage.}

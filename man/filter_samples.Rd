@@ -7,7 +7,8 @@
 filter_samples(x, sample_filter, description = "")
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_biallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 
 \item{sample_filter}{boolean vector specifying whether to keep (\code{TRUE})
 or drop (\code{FALSE}) each sample.}

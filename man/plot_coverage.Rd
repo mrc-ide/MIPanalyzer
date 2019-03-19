@@ -7,7 +7,8 @@
 plot_coverage(x)
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_biallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 }
 \description{
 Plot matrix of coverage over all samples and loci.

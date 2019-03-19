@@ -26,7 +26,7 @@ Estimates the inbreeding coefficient between all pairs of
 The probability of seeing the same or different alleles at a locus
   can be written in terms of the global allele frequency p and the inbreeding
   coefficient f, for example the probability of seeing the same REF allele is
-  \code{(1-f)*p^2 + f*p}. This formula can be multiplied over all loci to
+  \eqn{(1-f)*p^2 + f*p}. This formula can be multiplied over all loci to
   arrive at the overall likelihood of each value of f, which can then be
   chosen by maximum likelihood. This function carries out this comparison
   between all pairwise samples, passed in as a matrix. The formula above only

@@ -8,7 +8,8 @@ explore_filter_coverage_samples(x, min_coverage = 5,
   max_low_coverage = 50, breaks = 100)
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_biallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 
 \item{min_coverage}{the coverage threshold below which data is deemed to be
 low-coverage.}

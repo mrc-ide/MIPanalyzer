@@ -54,7 +54,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   }
   
   # get vcf object
-  if(!is.null(vcfR)){
+  if (!is.null(vcfR)){
     assert_custom_class(vcfR, "vcfR")
     vcf <- vcfR
   } else {
@@ -89,7 +89,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   }
   
   # extract sample info
-  samples <- data.frame(SAMPLE_ID = colnames(vcf@gt)[2:ncol(vcf@gt)], stringsAsFactors = FALSE)
+  samples <- data.frame(SAMPLE_ID = colnames(vcf@gt)[-1], stringsAsFactors = FALSE)
   
   # extract loci and specify some columns classes
   loci <- as.data.frame(vcf@fix)
@@ -98,7 +98,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   
   # keep vcf meta for downstream processes
   meta <- vcf@meta
-    
+  
   # initialise filter history
   filter_history <- data.frame(description = "raw data",
                                samples = nrow(coverage),
@@ -122,11 +122,92 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
 }
 
 #------------------------------------------------
+#' @title Convert vcf to multiallelic mipanalyzer data class
+#'
+#' @description Convert vcf to multiallelic mipanalyzer data class.
+#'
+#' @param file path to vcf file.
+#' @param vcfR object of class \code{vcfR}.
+#' @param verbose if reading from file, whether to read in verbose manner.
+#'
+#' @export
+
+vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) {
+  
+  # check inputs
+  if (!xor(!is.null(file), !is.null(vcfR))) {
+    stop("Must specify one input: either a raw vcf file path or a vcfR object")
+  }
+  
+  # get vcf object
+  if (!is.null(vcfR)){
+    assert_custom_class(vcfR, "vcfR")
+    vcf <- vcfR
+  } else {
+    assert_file_exists(file)
+    vcf <- vcfR::read.vcfR(file = file, verbose = verbose)
+  }
+  
+  # check that vcf is normalised
+  vcf_unnormalised <- vcf@fix %>%
+    tibble::as.tibble(.) %>%
+    dplyr::group_by(CHROM, POS) %>%
+    dplyr::summarise(locicount = n()) %>%
+    dplyr::ungroup() %>%
+    dplyr::summarise(maxlocicount = max(locicount)) != 1
+  if (vcf_unnormalised) {
+    stop("This is not a normalized vcf. Consider running bcftools norm, and/or review how the vcf was created")
+  }
+  
+  # extract counts into array and compute coverage as sum of counts
+  counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
+  counts <- array(NA, dim = c(4, nrow(counts_raw), ncol(counts_raw)))
+  for (i in 1:4) {
+    counts[i,,] <- masplit(counts_raw, record = i, sort = FALSE)
+  }
+  coverage <- colSums(counts, na.rm = TRUE)
+  coverage[coverage == 0] <- NA
+  
+  # extract sample info
+  samples <- data.frame(SAMPLE_ID = colnames(vcf@gt)[-1], stringsAsFactors = FALSE)
+  
+  # extract loci and specify some columns classes
+  loci <- as.data.frame(vcf@fix)
+  loci$POS <- as.numeric(as.character(loci$POS))
+  loci$QUAL <- as.numeric(as.character(loci$QUAL))
+  
+  # keep vcf meta for downstream processes
+  meta <- vcf@meta
+  
+  # initialise filter history
+  filter_history <- data.frame(description = "raw data",
+                               samples = nrow(coverage),
+                               loci = ncol(coverage),
+                               n_missing = sum(is.na(coverage)),
+                               prop_missing = mean(is.na(coverage)),
+                               function_call = NA,
+                               stringsAsFactors = FALSE)
+  
+  # create return list
+  ret <- list(coverage = coverage,
+              counts = counts,
+              samples = samples,
+              loci = loci,
+              filter_history = filter_history,
+              vcfmeta = meta)
+  
+  # return in mipanalyzer_biallelic class
+  class(ret) <- "mipanalyzer_multiallelic"
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Filter out some samples
 #'
 #' @description Filter out some samples.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param sample_filter boolean vector specifying whether to keep (\code{TRUE})
 #'   or drop (\code{FALSE}) each sample.
 #' @param description brief description of the filter, to be saved in the filter
@@ -137,14 +218,17 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
 filter_samples <- function(x, sample_filter, description = "") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_vector(sample_filter)
   assert_logical(sample_filter)
   assert_eq(length(sample_filter), nrow(x$samples))
   
   # apply filter
-  x$coverage <- x$coverage[sample_filter,]
-  x$counts <- x$counts[sample_filter,]
+  x$coverage <- x$coverage[sample_filter,,drop = FALSE]
+  switch (class(x),
+    "mipanalyzer_biallelic" = x$counts <- x$counts[sample_filter,,drop = FALSE],
+    "mipanalyzer_multiallelic" = x$counts <- x$counts[,sample_filter,,drop = FALSE]
+  )
   x$samples <- x$samples[sample_filter,,drop = FALSE]
   
   # record filter
@@ -164,7 +248,8 @@ filter_samples <- function(x, sample_filter, description = "") {
 #'
 #' @description Filter out some loci.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param locus_filter boolean vector specifying whether to keep (\code{TRUE})
 #'   or drop (\code{FALSE}) each locus.
 #' @param description brief description of the filter, to be saved in the filter
@@ -175,14 +260,17 @@ filter_samples <- function(x, sample_filter, description = "") {
 filter_loci <- function(x, locus_filter, description = "") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_vector(locus_filter)
   assert_logical(locus_filter)
   assert_eq(length(locus_filter), nrow(x$loci))
   
   # apply filter
-  x$coverage <- x$coverage[,locus_filter]
-  x$counts <- x$counts[,locus_filter]
+  x$coverage <- x$coverage[,locus_filter,drop = FALSE]
+  switch (class(x),
+          "mipanalyzer_biallelic" = x$counts <- x$counts[,locus_filter,drop = FALSE],
+          "mipanalyzer_multiallelic" = x$counts <- x$counts[,,locus_filter,drop = FALSE]
+  )
   x$loci <- x$loci[locus_filter,,drop = FALSE]
   
   # record filter
@@ -238,7 +326,8 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
 #'   function will have on the data without actually applying any filters. Can
 #'   be used to set coverage thresholds.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param min_coverage the coverage threshold below which data is deemed to be
 #'   low-coverage.
 #' @param max_low_coverage (percentage). Samples are not allowed to contain more
@@ -255,7 +344,7 @@ explore_filter_coverage_samples <- function(x,
                                             breaks = 100) {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_pos_int(min_coverage)
   assert_single_pos(max_low_coverage)
   assert_bounded(max_low_coverage, right = 100)
@@ -266,7 +355,7 @@ explore_filter_coverage_samples <- function(x,
   
   # construct main title
   main_title <- paste0("min_coverage = ", min_coverage,
-                       "\nmax_low_coverage = ", max_low_coverage,
+                       "\nmax_low_coverage = ", max_low_coverage, "%",
                        "\nsamples dropped = ", percent_drop, "%")
   
   # produce plot
@@ -292,7 +381,8 @@ explore_filter_coverage_samples <- function(x,
 #'   without applying any filtering using the
 #'   \code{explore_filter_coverage_samples()} function.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param min_coverage the coverage threshold below which data is deemed to be
 #'   low-coverage.
 #' @param max_low_coverage any sample with more than \code{max_low_coverage}
@@ -311,7 +401,7 @@ filter_coverage_samples <- function(x,
                                     description = "filter samples based on coverage") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_pos_int(min_coverage)
   assert_single_pos(max_low_coverage)
   assert_bounded(max_low_coverage, right = 100)
@@ -321,13 +411,19 @@ filter_coverage_samples <- function(x,
   percent_low_coverage <- rowMeans(x$coverage < min_coverage | is.na(x$coverage)) * 100
   
   # drop samples with too many low-coverage loci
-  x$coverage <- x$coverage[percent_low_coverage <= max_low_coverage,]
-  x$counts <- x$counts[percent_low_coverage <= max_low_coverage,]
-  x$samples <- x$samples[percent_low_coverage <= max_low_coverage,]
+  x$coverage <- x$coverage[percent_low_coverage <= max_low_coverage,,drop = FALSE]
+  switch (class(x),
+    "mipanalyzer_biallelic" = x$counts <- x$counts[percent_low_coverage <= max_low_coverage,,drop = FALSE],
+    "mipanalyzer_multiallelic" = x$counts <- x$counts[,percent_low_coverage <= max_low_coverage,,drop = FALSE]
+  )
+  x$samples <- x$samples[percent_low_coverage <= max_low_coverage,,drop = FALSE]
   
   # replace low-coverage with NA
   if (replace_low_coverage) {
     w <- which(x$coverage < min_coverage, arr.ind = TRUE)
+    if (class(x) == "mipanalyzer_multiallelic") {
+      w <- expand.grid(1:4, w[,1], w[,2])
+    }
     x$coverage[w] <- NA
     x$counts[w] <- NA
   }
@@ -351,7 +447,8 @@ filter_coverage_samples <- function(x,
 #'   function will have on the data without actually applying any filters. Can
 #'   be used to set coverage thresholds.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param min_coverage the coverage threshold below which data is deemed to be
 #'   low-coverage.
 #' @param max_low_coverage (percentage). Loci are not allowed to contain more
@@ -368,7 +465,7 @@ explore_filter_coverage_loci <- function(x,
                                          breaks = 100) {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_pos_int(min_coverage)
   assert_single_pos(max_low_coverage)
   assert_bounded(max_low_coverage, right = 100)
@@ -380,7 +477,7 @@ explore_filter_coverage_loci <- function(x,
   
   # construct main title
   main_title <- paste0("min_coverage = ", min_coverage,
-                       "\nmax_low_coverage = ", max_low_coverage,
+                       "\nmax_low_coverage = ", max_low_coverage, "%",
                        "\nloci dropped = ", percent_drop, "%")
   
   # produce plot
@@ -406,7 +503,8 @@ explore_filter_coverage_loci <- function(x,
 #'   without applying any filtering using the
 #'   \code{explore_filter_coverage_loci()} function.
 #'
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param min_coverage the coverage threshold below which data is deemed to be
 #'   low-coverage.
 #' @param max_low_coverage any locus with more than \code{max_low_coverage}
@@ -425,7 +523,7 @@ filter_coverage_loci <- function(x,
                                  description = "filter loci based on coverage") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_pos_int(min_coverage)
   assert_single_pos(max_low_coverage)
   assert_bounded(max_low_coverage, right = 100)
@@ -436,12 +534,18 @@ filter_coverage_loci <- function(x,
   
   # drop loci with too many low-coverage samples
   x$coverage <- x$coverage[,percent_low_coverage <= max_low_coverage]
-  x$counts <- x$counts[,percent_low_coverage <= max_low_coverage]
+  switch (class(x),
+          "mipanalyzer_biallelic" = x$counts <- x$counts[,percent_low_coverage <= max_low_coverage],
+          "mipanalyzer_multiallelic" = x$counts <- x$counts[,,percent_low_coverage <= max_low_coverage,drop = FALSE]
+  )
   x$loci <- x$loci[percent_low_coverage <= max_low_coverage,]
   
   # replace low-coverage with NA
   if (replace_low_coverage) {
     w <- which(x$coverage < min_coverage, arr.ind = TRUE)
+    if (class(x) == "mipanalyzer_multiallelic") {
+      w <- expand.grid(1:4, w[,1], w[,2])
+    }
     x$coverage[w] <- NA
     x$counts[w] <- NA
   }
@@ -463,14 +567,15 @@ filter_coverage_loci <- function(x,
 #'
 #' @description Plot matrix of coverage over all samples and loci.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #'
 #' @export
 
 plot_coverage <- function(x) {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   
   # ggplot raster
   plot1 <- ggplot2::ggplot(reshape2::melt(log(x$coverage)))
@@ -999,7 +1104,7 @@ plot_pcoa <- function(pcoa, num_components = 2, col = NULL, col_palette = NULL) 
 #' @details The probability of seeing the same or different alleles at a locus
 #'   can be written in terms of the global allele frequency p and the inbreeding
 #'   coefficient f, for example the probability of seeing the same REF allele is
-#'   \code{(1-f)*p^2 + f*p}. This formula can be multiplied over all loci to
+#'   \eqn{(1-f)*p^2 + f*p}. This formula can be multiplied over all loci to
 #'   arrive at the overall likelihood of each value of f, which can then be
 #'   chosen by maximum likelihood. This function carries out this comparison
 #'   between all pairwise samples, passed in as a matrix. The formula above only
