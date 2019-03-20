@@ -38,14 +38,15 @@ assignGTfrombiWSNRAF <- function(wsnraf, cutoff = 0.1){
 MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = 0.1){
   
   if(!inherits(input, c("mipanalyzer_biallelic"))){
-    stop("This function only works on objects of class mipanalyzer_biallelic or mipanalyzer_multiallelic, not class ", class(mipobj))
+    stop("This function only works on objects of class mipanalyzer_biallelic, not class ", 
+         class(input))
   }
   
   # setup for gt
   wsnraf <- input$counts/input$coverage
   GT <- assignGTfrombiWSNRAF(wsnraf, cutoff = cutoff)
-  ADref <- input$counts
-  ADalt <- input$coverage - input$counts
+  ADalt <- input$counts
+  ADref <- input$coverage - input$counts
   DP <- input$coverage
   
   gt <- t( ifelse(is.na(GT), NA, paste0(GT, ":", ADref, ",", ADalt, ":", DP)) ) # loci as rows, smpls as columns
