@@ -7,7 +7,8 @@
 filter_loci(x, locus_filter, description = "")
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_biallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 
 \item{locus_filter}{boolean vector specifying whether to keep (\code{TRUE})
 or drop (\code{FALSE}) each locus.}

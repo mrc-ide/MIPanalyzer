@@ -4,13 +4,13 @@
 \alias{sim_biallelic}
 \title{Simulate biallelic data}
 \usage{
-sim_biallelic(COI = 3, PLAF = seq(0, 0.5, 0.01), coverage = 100,
+sim_biallelic(COI = 3, PLAF = runif(10, 0, 0.5), coverage = 100,
   alpha = 1, overdispersion = 0, epsilon = 0)
 }
 \arguments{
 \item{COI}{complexity of infection.}
 
-\item{PLAF}{vector of population-level allele frequencies.}
+\item{PLAF}{vector of population-level allele frequencies at each locus.}
 
 \item{coverage}{coverage at each locus. If a single value then the same
 coverage is applied over all loci.}
@@ -27,8 +27,29 @@ the beta distribution having shape parameters \code{p/overdispersion} and
 allele. Applies in both directions.}
 }
 \description{
-Simulate biallelic data.
+Simulate biallelic data from a simple statistical model. Inputs
+  include the complexity of infection (COI), population-level allele
+  frequencies (PLAF) and some parameters dicating skew and error
+  distributions. Outputs include the phased haplotypes and the un-phased read
+  count and coverage data.
 }
 \details{
-TODO
+Simulated data are drawn from a simple statistical model:
+  \enumerate{
+    \item Strain proportions are drawn from a symmetric Dirichlet
+    distribution with shape parameter \code{alpha}.
+    \item Phased haplotypes are drawn at every locus, one for each
+    \code{COI}. The allele at each locus is drawn from a Bernoulli
+    distribution with probability given by the \code{PLAF}.
+    \item The "true" within-sample allele frequency at every locus is
+    obtained by multiplying haplotypes by their strain proportions, and
+    summing over haplotypes. Errors are introduced through the equation
+    \deqn{w_error = w*(1-e) + (1-w)*e}where \eqn{w} is the WSAF without error
+    and \eqn{e} is the error parameter \code{epsilon}.
+    \item Final read counts are drawn from a beta-binomial distribution with
+    expectation \eqn{w_error}. The raw number of draws is given by the
+    \code{coverage}, and the skew of the distribution is given by the
+    \code{overdispersion} parameter. If \code{overdispersion = 0} then the
+    distribution is binomial, rather than beta-binomial.
+  }
 }
