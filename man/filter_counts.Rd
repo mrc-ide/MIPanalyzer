@@ -8,7 +8,8 @@ filter_counts(x, count_min = 2,
   description = "filter individual allele counts")
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_multiallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 
 \item{count_min}{alleles with fewer than this many counts are dropped.}
 

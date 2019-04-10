@@ -324,7 +324,8 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
 #' @description Drop any allele for which the number of read counts is below a
 #'   given threshold. Coverage is adjusted to account for dropped reads.
 #' 
-#' @param x object of class \code{mipanalyzer_multiallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param count_min alleles with fewer than this many counts are dropped.
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
@@ -334,13 +335,25 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
 filter_counts <- function(x, count_min = 2, description = "filter individual allele counts") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_multiallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_pos_int(count_min, zero_allowed = FALSE)
   
-  # drop alleles below threshold
-  x$counts[!is.na(x$counts) & x$counts < count_min] <- 0
-  x$coverage <- colSums(x$counts, na.rm = TRUE)
-  x$coverage[x$coverage == 0] <- NA
+  # switch based on data type
+  if (class(x) == "mipanalyzer_biallelic") {
+    
+    # drop alleles below threshold
+    w <- which(!is.na(x$counts) & x$counts < count_min)
+    x$coverage[w] <- x$coverage[w] - x$counts[w]
+    x$counts[w] <- NA
+    x$coverage[x$coverage == 0] <- NA
+    
+  } else {
+    
+    # drop alleles below threshold
+    x$counts[!is.na(x$counts) & x$counts < count_min] <- 0
+    x$coverage <- colSums(x$counts, na.rm = TRUE)
+    x$coverage[x$coverage == 0] <- NA
+  }
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -374,20 +387,30 @@ filter_counts <- function(x, count_min = 2, description = "filter individual all
 filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual allele WSAF") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_multiallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_bounded(wsaf_min)
   
   # get WSAF
   wsaf <- get_wsaf(x, impute = FALSE)
   
-  # drop alleles below threshold
-  for (i in 1:4) {
-    x$counts[i,,][!is.na(wsaf[i,,]) & wsaf[i,,] < wsaf_min] <- 0
+  # switch based on data type
+  if (class(x) == "mipanalyzer_biallelic") {
+    
+    # drop alleles below threshold
+    w <- which(!is.na(wsaf) & wsaf < wsaf_min, arr.ind = TRUE)
+    x$coverage[w] <- x$coverage[w] - x$counts[w]
+    x$coverage[x$coverage == 0] <- NA
+    x$counts[w] <- NA
+    
+  } else {
+    
+    # drop alleles below threshold
+    for (i in 1:4) {
+      x$counts[i,,][!is.na(wsaf[i,,]) & wsaf[i,,] < wsaf_min] <- NA
+    }
+    x$coverage <- colSums(x$counts, na.rm = TRUE)
+    x$coverage[x$coverage == 0] <- NA
   }
-  
-  # recalculate coverage
-  x$coverage <- colSums(x$counts, na.rm = TRUE)
-  x$coverage[x$coverage == 0] <- NA
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -415,15 +438,30 @@ filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual all
 filter_loci_invariant <- function(x, description = "filter loci to drop invariant sites") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_multiallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   
   # get WSAF
   wsaf <- get_wsaf(x, impute = FALSE)
   
-  # identify invariant sites
-  invariant <- mapply(function(i) {
-    all(wsaf[1,,i] == wsaf[1,1,i], na.rm = TRUE)
-  }, 1:dim(wsaf)[3])
+  # switch based on data type
+  if (class(x) == "mipanalyzer_biallelic") {
+    
+    # identify invariant sites
+    invariant <- apply(wsaf, 2, function(y) {
+      all(y[!is.na(y)] == 1) | all(y[!is.na(y)] == 0)
+    })
+    
+  } else {
+    
+    # identify invariant sites
+    invariant <- 1
+    for (i in 1:dim(wsaf)[1]) {
+      invariant_i <- apply(wsaf[i,,], 2, function(y) {
+        all(y[!is.na(y)] == 1) | all(y[!is.na(y)] == 0)
+      })
+      invariant <- invariant*invariant_i
+    }
+  }
   
   # drop invariant sites
   ret <- filter_loci(x, !invariant, description = description)
