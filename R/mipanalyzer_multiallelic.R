@@ -22,31 +22,6 @@ print.mipanalyzer_multiallelic <- function(x, ...) {
 }
 
 #------------------------------------------------
-#' @title Ordinary print function for class mipanalyzer_multiallelic
-#'
-#' @description Calling \code{print()} on an object of class
-#'   \code{mipanalyzer_multiallelic} results in custom output. This function therefore
-#'   stands in for the base \code{print()} function, and is equivalent to
-#'   running \code{print(unclass(x))}.
-#'
-#' @param x object of class \code{mipanalyzer_multiallelic}
-#' @param ... other arguments passed to \code{print()}
-#'
-#' @export
-
-print_full <- function(x, ...) {
-  
-  # check inputs
-  assert_custom_class(x, "mipanalyzer_multiallelic")
-  
-  # print un-classed object
-  print(unclass(x), ...)
-  
-  # return invisibly
-  invisible(x)
-}
-
-#------------------------------------------------
 #' @title Print summary for class mipanalyzer_multiallelic
 #'   
 #' @description Custom summary function for class \code{mipanalyzer_multiallelic}.

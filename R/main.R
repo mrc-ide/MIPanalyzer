@@ -129,7 +129,6 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
 #' @param file path to vcf file.
 #' @param vcfR object of class \code{vcfR}.
 #' @param verbose if reading from file, whether to read in verbose manner.
-#'
 #' @export
 
 vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) {
@@ -320,6 +319,119 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
 }
 
 #------------------------------------------------
+#' @title Filter alleles based on raw counts
+#'
+#' @description Drop any allele for which the number of read counts is below a
+#'   given threshold. Coverage is adjusted to account for dropped reads.
+#' 
+#' @param x object of class \code{mipanalyzer_multiallelic}.
+#' @param count_min alleles with fewer than this many counts are dropped.
+#' @param description brief description of the filter, to be saved in the filter
+#'   history.
+#'
+#' @export
+
+filter_counts <- function(x, count_min = 2, description = "filter individual allele counts") {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_multiallelic")
+  assert_single_pos_int(count_min, zero_allowed = FALSE)
+  
+  # drop alleles below threshold
+  x$counts[!is.na(x$counts) & x$counts < count_min] <- 0
+  x$coverage <- colSums(x$counts, na.rm = TRUE)
+  x$coverage[x$coverage == 0] <- NA
+  
+  # record filter
+  function_call <- paste0(deparse(match.call()), collapse = "")
+  x$filter_history <- rbind(x$filter_history, list(description = description,
+                                                   samples = nrow(x$coverage),
+                                                   loci = ncol(x$coverage),
+                                                   n_missing = sum(is.na(x$coverage)),
+                                                   prop_missing = mean(is.na(x$coverage)),
+                                                   function_call = function_call))
+  
+  return(x)
+}
+
+#------------------------------------------------
+#' @title Filter alleles based on within-sample allele frequencies
+#'
+#' @description Drop any allele for which the within-sample allele frequency
+#'   (WSAF) is below a givin threshold. Thresholds apply in both directions, for
+#'   example if \code{wsaf_min = 0.01} then alleles with a WSAF less than 0.01
+#'   *or* greater than 0.99 will be rounded to 0 or 1, respectively. Coverage is
+#'   adjusted to account for dropped reads.
+#' 
+#' @param x object of class \code{mipanalyzer_multiallelic}.
+#' @param wsaf_min alleles with counts that make a WSAF less than this threshold
+#'   are dropped.
+#' @param description brief description of the filter, to be saved in the filter
+#'   history.
+#'
+#' @export
+
+filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual allele WSAF") {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_multiallelic")
+  assert_single_bounded(wsaf_min)
+  
+  # get WSAF
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # drop alleles below threshold
+  for (i in 1:4) {
+    x$counts[i,,][!is.na(wsaf[i,,]) & wsaf[i,,] < wsaf_min] <- 0
+  }
+  
+  # recalculate coverage
+  x$coverage <- colSums(x$counts, na.rm = TRUE)
+  x$coverage[x$coverage == 0] <- NA
+  
+  # record filter
+  function_call <- paste0(deparse(match.call()), collapse = "")
+  x$filter_history <- rbind(x$filter_history, list(description = description,
+                                                   samples = nrow(x$coverage),
+                                                   loci = ncol(x$coverage),
+                                                   n_missing = sum(is.na(x$coverage)),
+                                                   prop_missing = mean(is.na(x$coverage)),
+                                                   function_call = function_call))
+  
+  return(x)
+}
+
+#------------------------------------------------
+#' @title Filter loci to drop invariant sites
+#'
+#' @description Filter loci to drop invariant sites.
+#' 
+#' @param x object of class \code{mipanalyzer_multiallelic}.
+#' @param description brief description of the filter, to be saved in the filter
+#'   history.
+#'
+#' @export
+
+filter_loci_invariant <- function(x, description = "filter loci to drop invariant sites") {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_multiallelic")
+  
+  # get WSAF
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # identify invariant sites
+  invariant <- mapply(function(i) {
+    all(wsaf[1,,i] == wsaf[1,1,i], na.rm = TRUE)
+  }, 1:dim(wsaf)[3])
+  
+  # drop invariant sites
+  ret <- filter_loci(x, !invariant, description = description)
+  
+  return(ret)
+}
+
+#------------------------------------------------
 #' @title Explore sample coverage prior to filtering
 #'
 #' @description Explore what effect the \code{filter_coverage_samples()}
@@ -421,11 +533,14 @@ filter_coverage_samples <- function(x,
   # replace low-coverage with NA
   if (replace_low_coverage) {
     w <- which(x$coverage < min_coverage, arr.ind = TRUE)
-    if (class(x) == "mipanalyzer_multiallelic") {
-      w <- expand.grid(1:4, w[,1], w[,2])
-    }
     x$coverage[w] <- NA
-    x$counts[w] <- NA
+    if (class(x) == "mipanalyzer_multiallelic") {
+      for (i in 1:4) {
+        x$counts[i,,][w] <- NA
+      }
+    } else {
+      x$counts[w] <- NA
+    }
   }
   
   # record filter
@@ -543,11 +658,14 @@ filter_coverage_loci <- function(x,
   # replace low-coverage with NA
   if (replace_low_coverage) {
     w <- which(x$coverage < min_coverage, arr.ind = TRUE)
-    if (class(x) == "mipanalyzer_multiallelic") {
-      w <- expand.grid(1:4, w[,1], w[,2])
-    }
     x$coverage[w] <- NA
-    x$counts[w] <- NA
+    if (class(x) == "mipanalyzer_multiallelic") {
+      for (i in 1:4) {
+        x$counts[i,,][w] <- NA
+      }
+    } else {
+      x$counts[w] <- NA
+    }
   }
   
   # record filter
@@ -605,17 +723,39 @@ plot_coverage <- function(x) {
 get_wsaf <- function(x, impute = TRUE, FUN = median, ...) {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   assert_single_logical(impute)
   
-  # get within-sample allele frequencies
-  wsaf <- x$counts/x$coverage
-  
-  # impute missing values over loci
-  if (impute) {
-    locus_impute <- apply(wsaf, 2, FUN, na.rm = TRUE, ...)
-    locus_impute <- outer(rep(1, nrow(wsaf)), locus_impute)
-    wsaf[is.na(wsaf)] <- locus_impute[is.na(wsaf)]
+  # switch based on class
+  if (class(x) == "mipanalyzer_biallelic") {
+    
+    # get within-sample allele frequencies
+    wsaf <- x$counts/x$coverage
+    
+    # impute missing values over loci
+    if (impute) {
+      locus_impute <- apply(wsaf, 2, FUN, na.rm = TRUE, ...)
+      locus_impute <- outer(rep(1, nrow(wsaf)), locus_impute)
+      wsaf[is.na(wsaf)] <- locus_impute[is.na(wsaf)]
+    }
+    
+  } else {
+    
+    # get within-sample allele frequencies
+    wsaf <- array(NA, dim = dim(x$counts))
+    for (i in 1:4) {
+      wsaf[i,,] <- x$counts[i,,]/x$coverage
+    }
+    
+    # impute missing values over loci
+    if (impute) {
+      for (i in 1:4) {
+        locus_impute <- apply(wsaf[i,,], 2, FUN, na.rm = TRUE, ...)
+        locus_impute <- outer(rep(1, nrow(wsaf[i,,])), locus_impute)
+        wsaf[i,,][is.na(wsaf[i,,])] <- locus_impute[is.na(wsaf[i,,])]
+      }
+    }
+    
   }
   
   return(wsaf)
@@ -1242,8 +1382,8 @@ get_IBS_distance <- function(x, ignore_het = TRUE, report_progress = TRUE) {
 #'     \item The "true" within-sample allele frequency at every locus is
 #'     obtained by multiplying haplotypes by their strain proportions, and
 #'     summing over haplotypes. Errors are introduced through the equation
-#'     \deqn{w_error = w*(1-e) + (1-w)*e}where \eqn{w} is the WSAF without error
-#'     and \eqn{e} is the error parameter \code{epsilon}.
+#'     \deqn{wsaf_error = wsaf*(1-e) + (1-wsaf)*e}where \eqn{wsaf} is the WSAF
+#'     without error and \eqn{e} is the error parameter \code{epsilon}.
 #'     \item Final read counts are drawn from a beta-binomial distribution with
 #'     expectation \eqn{w_error}. The raw number of draws is given by the
 #'     \code{coverage}, and the skew of the distribution is given by the
@@ -1387,4 +1527,26 @@ Pf_chrom_lengths <- function() {
                                1687655, 2038337, 2271478,
                                2895605, 3291871))
   return(ret)
+}
+
+#------------------------------------------------
+#' @title Ordinary print function for unclassed object
+#'
+#' @description Calling \code{print()} on an object of custom class, e.g.
+#'   \code{mipanalyzer_biallelic}, results in custom output. This function
+#'   therefore stands in for the base \code{print()} function, and is equivalent
+#'   to running \code{print(unclass(x))}.
+#'
+#' @param x object of custom class (e.g. \code{mipanalyzer_biallelic}).
+#' @param ... other arguments passed to \code{print()}.
+#'
+#' @export
+
+print_full <- function(x, ...) {
+  
+  # print un-classed object
+  print(unclass(x), ...)
+  
+  # return invisibly
+  invisible(x)
 }

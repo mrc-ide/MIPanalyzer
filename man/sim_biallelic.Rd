@@ -44,8 +44,8 @@ Simulated data are drawn from a simple statistical model:
     \item The "true" within-sample allele frequency at every locus is
     obtained by multiplying haplotypes by their strain proportions, and
     summing over haplotypes. Errors are introduced through the equation
-    \deqn{w_error = w*(1-e) + (1-w)*e}where \eqn{w} is the WSAF without error
-    and \eqn{e} is the error parameter \code{epsilon}.
+    \deqn{wsaf_error = wsaf*(1-e) + (1-wsaf)*e}where \eqn{wsaf} is the WSAF
+    without error and \eqn{e} is the error parameter \code{epsilon}.
     \item Final read counts are drawn from a beta-binomial distribution with
     expectation \eqn{w_error}. The raw number of draws is given by the
     \code{coverage}, and the skew of the distribution is given by the
