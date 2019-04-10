@@ -7,21 +7,21 @@
 #' @title Assign the GT calls from the NONREFERENT WSAF
 #' @param wsnraf A within-sample non-referent allele frequncy from biallelic SNPs as a \class{matrix}.  
 #' @param cutoff The allele-frequency cutoff to determine genotype calls
-#' @description This function takes in the within-sample non-referent allele frequency matrix and converts it to a (diploid) genotype matrix. The genotype matrix is 
+#' @description This function takes in the within-sample referent allele frequency matrix and converts it to a (diploid) genotype matrix. The genotype matrix is 
 #' character matrix with "0/0", "0/1", "1/1" representing the homozygote referent, heterozygote, and homozygote alternative calls. The genotype call is 
 #' determined by the allele frequency and the \param{cutoff} set by the user. Specifically, an allele frequency less than the cutoff or greater than \code{1-\param{cutoff}} correspond to a
-#' homozygote referent and homozygote alternative call, respectively. All other allele-frequencies will be converted to the heterozygote call \code{"0/1"}. 
+#' homozygote altnernative and homozygote referent call, respectively. All other allele-frequencies will be converted to the heterozygote call \code{"0/1"}. 
 #' 
 #' @return A GT matrix as a \class{matrix}.
 #' not exported
 
-assignGTfrombiWSNRAF <- function(wsnraf, cutoff = 0.1){
+assignGTfrombiWSRAF <- function(wsraf, cutoff = 0.1){
   
   GT <- matrix(NA, dim(wsnraf)[1], dim(wsnraf)[2])
   
-  GT <- ifelse(wsnraf > 1-cutoff, "1/1",
-               ifelse(wsnraf < 0+cutoff, "0/0",
-                      ifelse(!is.na(wsnraf), "0/1", NA)))
+  GT <- ifelse(wsraf > 1-cutoff, "0/0",
+               ifelse(wsraf < 0+cutoff, "0/0",
+                      ifelse(!is.na(wsraf), "0/1", NA)))
   
   return(GT)
   
@@ -42,8 +42,8 @@ MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = 0.1){
   }
   
   # setup for gt
-  wsnraf <- input$counts/input$coverage
-  GT <- assignGTfrombiWSNRAF(wsnraf, cutoff = cutoff)
+  wsraf <- input$counts/input$coverage
+  GT <- assignGTfrombiWSNRAF(wsraf, cutoff = cutoff)
   ADref <- input$counts
   ADalt <- input$coverage - input$counts
   DP <- input$coverage
