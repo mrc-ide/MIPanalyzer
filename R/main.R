@@ -1344,6 +1344,62 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = FALSE, report_prog
   return(ret)
 }
 
+
+#------------------------------------------------
+#' @title Get identity by mixture
+#'
+#' @description Get identity by mixture distance.
+#'
+#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param tol tolerance on mixture comparisons. Defeault = 0
+#' @param diagonal Should the diagonal of the distance matrix be changed to a
+#'   given value. Deafult = NULL, which cause no changes.
+#' @param report_progress if \code{TRUE} then a progress bar is printed to the
+#'   console.
+#'
+#' @export
+
+get_IB_mixture <- function(x, tol = 0, diagonal = NULL, report_progress = TRUE) {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_single_numeric(tol)
+  assert_single_logical(report_progress)
+  
+  # get basic quantities
+  nsamp <- nrow(x$samples)
+  
+  # get within-sample allele frequencies
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # initialise progress bar
+  if (report_progress) {
+    pbar <- txtProgressBar(0, nsamp, style = 3)
+  }
+  
+  # compute all pairwise IBS
+  ret <- matrix(NA, nsamp, nsamp)
+  for (i in 1:nsamp) {
+    if (tol == 0) {
+      ret[i,] <- rowMeans(outer(rep(1,nsamp), wsaf[i,]) == wsaf, na.rm = TRUE)
+    } else {
+      ret[i,] <- rowMeans(abs(outer(rep(1,nsamp), wsaf[i,]) - wsaf) <= tol, na.rm = TRUE)  
+    }
+    # update progress bar
+    if (report_progress) {
+      setTxtProgressBar(pbar, i)
+    }
+  }
+  
+  if (!is.null(diagonal)) {
+    ret[diag(ret)] <- diagonal
+  }
+  
+  # return distance matrix
+  return(ret)
+}
+
+
 #------------------------------------------------
 #' @title Get identity by state (IBS) distance
 #'
@@ -1355,12 +1411,14 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = FALSE, report_prog
 #' @param x object of class \code{mipanalyzer_biallelic}.
 #' @param ignore_het whether to ignore heterzygous comparisons, or alternatively
 #'   call the major allele at every locus (see details).
+#' @param diagonal Should the diagonal of the distance matrix be changed to a
+#'   given value. Deafult = NULL, which cause no changes.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console.
 #'
 #' @export
 
-get_IBS_distance <- function(x, ignore_het = TRUE, report_progress = TRUE) {
+get_IBS_distance <- function(x, ignore_het = TRUE, diagonal = NULL, report_progress = TRUE) {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
@@ -1395,7 +1453,10 @@ get_IBS_distance <- function(x, ignore_het = TRUE, report_progress = TRUE) {
       setTxtProgressBar(pbar, i)
     }
   }
-  ret[row(ret) >= col(ret)] <- NA
+  
+  if (!is.null(diagonal)) {
+    ret[diag(ret)] <- diagonal
+  }
   
   # return distance matrix
   return(ret)
