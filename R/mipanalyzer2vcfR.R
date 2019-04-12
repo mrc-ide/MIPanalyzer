@@ -4,7 +4,7 @@
 
 
 
-#' @title Assign the GT calls from the NONREFERENT WSAF
+#' @title Assign the GT calls from the REFERENT WSAF
 #' @param wsraf A within-sample non-referent allele frequncy from biallelic SNPs as a \code{matrix}.  
 #' @param cutoff The allele-frequency cutoff to determine genotype calls
 #' @description This function takes in the within-sample non-referent allele frequency matrix and converts it to a (diploid) genotype matrix. The genotype matrix is 
@@ -17,14 +17,15 @@
 
 assignGTfrombiWSRAF <- function(wsraf, cutoff = 0.1){
   
-  GT <- matrix(NA, dim(wsnraf)[1], dim(wsnraf)[2])
+  # extract GT matrix
+  GT <- matrix(NA, dim(wsraf)[1], dim(wsraf)[2])
   
+  # round accordin to cutoff
   GT <- ifelse(wsraf > 1-cutoff, "0/0",
                ifelse(wsraf < 0+cutoff, "1/1",
                       ifelse(!is.na(wsraf), "0/1", NA)))
   
   return(GT)
-  
 }
 
 

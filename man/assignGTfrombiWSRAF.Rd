@@ -2,7 +2,7 @@
 % Please edit documentation in R/mipanalyzer2vcfR.R
 \name{assignGTfrombiWSRAF}
 \alias{assignGTfrombiWSRAF}
-\title{Assign the GT calls from the NONREFERENT WSAF}
+\title{Assign the GT calls from the REFERENT WSAF}
 \usage{
 assignGTfrombiWSRAF(wsraf, cutoff = 0.1)
 }
