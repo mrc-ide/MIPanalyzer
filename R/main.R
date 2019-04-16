@@ -945,7 +945,7 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
     # calculate distance between sample i and all others
     dab <- sweep(1-wsaf[-(1:i),,drop = FALSE], 2, wsaf[i,], "*") + sweep(wsaf[-(1:i),,drop = FALSE], 2, 1-wsaf[i,], "*")
     dab_weighted <- sweep(dab, 2, weight, "*")
-    dist_mat[i,-(1:i)] <- rowSums(dab_weighted, na.rm = TRUE)
+    dist_mat[i,-(1:i)] <- rowSums(dab_weighted, na.rm = TRUE) / apply(dab_weighted, 1, function(x) sum(!is.na(x)))
     
     # update progress bar
     if (report_progress) {
