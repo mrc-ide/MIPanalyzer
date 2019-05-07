@@ -49,7 +49,7 @@ MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = 0.1){
   ADalt <- input$coverage - input$counts
   DP <- input$coverage
   
-  gt <- t( ifelse(is.na(GT), NA, paste0(GT, ":", ADref, ",", ADalt, ":", DP)) ) # loci as rows, smpls as columns
+  gt <- t( ifelse(is.na(GT), ".", paste0(GT, ":", ADref, ",", ADalt, ":", DP)) ) # loci as rows, smpls as columns
   
   # append format column and sample names
   gt <- cbind(FORMAT = "GT:AD:DP", gt)
