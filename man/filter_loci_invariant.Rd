@@ -4,8 +4,7 @@
 \alias{filter_loci_invariant}
 \title{Filter loci to drop invariant sites}
 \usage{
-filter_loci_invariant(x,
-  description = "filter loci to drop invariant sites")
+filter_loci_invariant(x, description = "filter loci to drop invariant sites")
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_multiallelic}.}

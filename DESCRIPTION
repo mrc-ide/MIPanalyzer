@@ -1,7 +1,7 @@
 Package: MIPanalyzer
 Type: Package
 Title: Filtering and analysis of MIP data
-Version: 0.1.0
+Version: 1.0.0
 Author: Bob Verity
 Maintainer: Bob Verity <r.verity@imperial.ac.uk>
 Description: Filtering and analysis of MIP data.
@@ -24,7 +24,7 @@ Imports:
     stringr,
     methods,
     rworldmap
-RoxygenNote: 7.0.0
+RoxygenNote: 7.0.2
 SystemRequirements: C++11
 Suggests: 
     testthat,

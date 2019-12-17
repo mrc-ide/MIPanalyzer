@@ -4,8 +4,12 @@
 \alias{explore_filter_coverage_loci}
 \title{Explore locus coverage prior to filtering}
 \usage{
-explore_filter_coverage_loci(x, min_coverage = 5,
-  max_low_coverage = 50, breaks = 100)
+explore_filter_coverage_loci(
+  x,
+  min_coverage = 5,
+  max_low_coverage = 50,
+  breaks = 100
+)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic} or

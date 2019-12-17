@@ -4,8 +4,7 @@
 \alias{filter_wsaf}
 \title{Filter alleles based on within-sample allele frequencies}
 \usage{
-filter_wsaf(x, wsaf_min = 0.01,
-  description = "filter individual allele WSAF")
+filter_wsaf(x, wsaf_min = 0.01, description = "filter individual allele WSAF")
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_multiallelic}.}

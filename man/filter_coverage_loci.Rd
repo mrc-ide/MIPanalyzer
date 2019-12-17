@@ -4,9 +4,13 @@
 \alias{filter_coverage_loci}
 \title{Filter loci based on coverage}
 \usage{
-filter_coverage_loci(x, min_coverage = 5, max_low_coverage = 50,
+filter_coverage_loci(
+  x,
+  min_coverage = 5,
+  max_low_coverage = 50,
   replace_low_coverage = FALSE,
-  description = "filter loci based on coverage")
+  description = "filter loci based on coverage"
+)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic} or
