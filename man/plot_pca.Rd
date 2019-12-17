@@ -4,13 +4,8 @@
 \alias{plot_pca}
 \title{Plot PCA}
 \usage{
-plot_pca(
-  pca,
-  num_components = 2,
-  col = NULL,
-  col_palette = NULL,
-  ggplot = FALSE
-)
+plot_pca(pca, num_components = 2, col = NULL, col_palette = NULL,
+  ggplot = FALSE)
 }
 \arguments{
 \item{pca}{output of \code{pca_wsaf()} function.}

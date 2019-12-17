@@ -358,9 +358,11 @@ filter_counts <- function(x, count_min = 2, description = "filter individual all
   if (class(x) == "mipanalyzer_biallelic") {
     
     # drop alleles below threshold
-    w <- which(!is.na(x$counts) & x$counts < count_min)
+    w <- which(!is.na(x$counts) & x$counts < count_min, arr.ind = TRUE)
     x$coverage[w] <- x$coverage[w] - x$counts[w]
-    x$counts[w] <- NA
+    x$counts[w] <- 0
+    w <- which(!is.na(x$counts) & (x$coverage - x$counts) < count_min, arr.ind = TRUE)
+    x$coverage[w] <- x$counts[w]
     x$coverage[x$coverage == 0] <- NA
     
   } else {
@@ -415,6 +417,9 @@ filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual all
     # drop alleles below threshold
     w <- which(!is.na(wsaf) & wsaf < wsaf_min, arr.ind = TRUE)
     x$coverage[w] <- x$coverage[w] - x$counts[w]
+    x$counts[w] <- 0
+    w <- which(!is.na(wsaf) & (1.0 - wsaf) < wsaf_min, arr.ind = TRUE)
+    x$coverage[w] <- x$counts[w]
     x$coverage[x$coverage == 0] <- NA
     x$counts[w] <- NA
     

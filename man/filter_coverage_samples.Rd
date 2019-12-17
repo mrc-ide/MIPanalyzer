@@ -4,13 +4,9 @@
 \alias{filter_coverage_samples}
 \title{Filter samples based on coverage}
 \usage{
-filter_coverage_samples(
-  x,
-  min_coverage = 5,
-  max_low_coverage = 50,
+filter_coverage_samples(x, min_coverage = 5, max_low_coverage = 50,
   replace_low_coverage = FALSE,
-  description = "filter samples based on coverage"
-)
+  description = "filter samples based on coverage")
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic} or

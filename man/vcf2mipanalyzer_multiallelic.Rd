@@ -4,7 +4,8 @@
 \alias{vcf2mipanalyzer_multiallelic}
 \title{Convert vcf to multiallelic mipanalyzer data class}
 \usage{
-vcf2mipanalyzer_multiallelic(file = NULL, vcfR = NULL, verbose = TRUE)
+vcf2mipanalyzer_multiallelic(file = NULL, vcfR = NULL,
+  verbose = TRUE)
 }
 \arguments{
 \item{file}{path to vcf file.}

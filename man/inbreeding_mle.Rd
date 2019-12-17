@@ -4,12 +4,8 @@
 \alias{inbreeding_mle}
 \title{Estimate pairwise inbreeding coefficient F by maximum likelihood}
 \usage{
-inbreeding_mle(
-  x,
-  f = seq(0, 1, l = 11),
-  ignore_het = FALSE,
-  report_progress = TRUE
-)
+inbreeding_mle(x, f = seq(0, 1, l = 11), ignore_het = FALSE,
+  report_progress = TRUE)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}
