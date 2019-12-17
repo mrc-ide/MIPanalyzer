@@ -1,7 +1,45 @@
+# magenta
 
-[![Travis build status](https://travis-ci.org/mrc-ide/MIPanalyzer.svg?branch=master)](https://travis-ci.org/mrc-ide/MIPanalyzer)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/mrc-ide/MIPanalyzer?branch=master&svg=true)](https://ci.appveyor.com/project/mrc-ide/MIPanalyzer)
-[![Coverage status](https://codecov.io/gh/mrc-ide/MIPanalyzer/branch/master/graph/badge.svg)](https://codecov.io/github/mrc-ide/MIPanalyzer?branch=master)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Travis-CI Build Status](https://travis-ci.org/mrc-ide/MIPanalyzer.png?branch=master)](https://travis-ci.org/mrc-ide/MIPanalyzer)
 
-# MIPanalyzer
-Filtering and analysis of MIP data
+
+## Motivation
+
+`MIPanalyzer` is a tool for analyzing MIPs (molecular inversion probe) data. This will usually be in the form of `vcf` files produced by [MIPwrangler](https://github.com/bailey-lab/MIPWrangler).
+
+## Installation
+
+You can also install `MIPanalyzer` from github with:
+
+
+```r
+#install.packages("devtools")
+devtools::install_github("mrc-ide/MIPanalyzer")
+```
+
+Note that on Windows, a toolkit (Rtools) needs to be installed separately for devtools to work. 
+
+Once installed, the package can be loaded using:
+
+
+```r
+# Load the package
+library(MIPanalyzer)
+```
+
+Documentation
+-------------
+
+*MIPanalyzer* is documented on a [dedicated
+ website](https://mrc-ide.github.io/MIPanalyzer).
+
+This includes the following vignettes:
+
+- **`Introduction`**: general introduction to using `MIPanalyzer`
+
+Contributors
+------------
+- [Bob Verity](https://github.com/bobverity)
+- [OJ Watson](https://github.com/ojwatson)
+- [Nick Brazeau](https://github.com/nickbrazeau)

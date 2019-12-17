@@ -21,7 +21,6 @@ reference:
       - filter_overcounts
       - filter_samples
       - filter_wsaf
-      - shared_pathways
   - title: "Plotting"
     desc: "Plotting PCA outputs"
     contents:
@@ -39,6 +38,8 @@ navbar:
   left:
     - href: index.html
       icon: fa-home
+    - text: Introduction
+      href: articles/introduction.html
     - text: Reference
       href: reference/index.html
   right:
