@@ -7,3 +7,14 @@
 ^\.Rproj\.user$
 ignore/
 R_ignore/
+scripts
+vignettes_src
+README\.Rmd
+^CONDUCT\.md$
+vignettes_src
+^_pkgdown\.yml$
+^codemeta\.json$
+^docs$
+docs
+vignettes/introduction_cache
+vignettes_src/introduction_cache

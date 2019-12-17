@@ -64,11 +64,11 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   
   # check that vcf is normalised
   vcf_unnormalised <- vcf@fix %>%
-                      tibble::as.tibble(.) %>%
-                      dplyr::group_by(CHROM, POS) %>%
-                      dplyr::summarise(locicount = n()) %>%
-                      dplyr::ungroup() %>%
-                      dplyr::summarise(maxlocicount = max(locicount)) != 1
+    tibble::as.tibble(.) %>%
+    dplyr::group_by(CHROM, POS) %>%
+    dplyr::summarise(locicount = n()) %>%
+    dplyr::ungroup() %>%
+    dplyr::summarise(maxlocicount = max(locicount)) != 1
   if (vcf_unnormalised) {
     stop("This is not a normalized vcf. Consider running bcftools norm, and/or review how the vcf was created")
   }
@@ -81,7 +81,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   # extract coverage and counts matrices
   coverage <- t(vcfR::extract.gt(vcf, element = "DP", as.numeric = T))
   counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
-  counts <- masplit(counts_raw, record = 1, sort = FALSE, decreasing = FALSE)
+  counts <- vcfR::masplit(counts_raw, record = 1, sort = FALSE, decreasing = FALSE)
   
   # check that all missing fields correspond between coverage and counts
   if (!identical(is.na(coverage), is.na(counts))) {
@@ -162,7 +162,7 @@ vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRU
   counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
   counts <- array(NA, dim = c(4, nrow(counts_raw), ncol(counts_raw)))
   for (i in 1:4) {
-    counts[i,,] <- masplit(counts_raw, record = i, sort = FALSE)
+    counts[i,,] <- vcfR::masplit(counts_raw, record = i, sort = FALSE)
   }
   coverage <- colSums(counts, na.rm = TRUE)
   coverage[coverage == 0] <- NA
@@ -225,8 +225,8 @@ filter_samples <- function(x, sample_filter, description = "") {
   # apply filter
   x$coverage <- x$coverage[sample_filter,,drop = FALSE]
   switch (class(x),
-    "mipanalyzer_biallelic" = x$counts <- x$counts[sample_filter,,drop = FALSE],
-    "mipanalyzer_multiallelic" = x$counts <- x$counts[,sample_filter,,drop = FALSE]
+          "mipanalyzer_biallelic" = x$counts <- x$counts[sample_filter,,drop = FALSE],
+          "mipanalyzer_multiallelic" = x$counts <- x$counts[,sample_filter,,drop = FALSE]
   )
   x$samples <- x$samples[sample_filter,,drop = FALSE]
   
@@ -290,7 +290,8 @@ filter_loci <- function(x, locus_filter, description = "") {
 #' @description Filter out over-counts, defined as count > coverage.
 #'   Replace any such element with NA.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
@@ -299,12 +300,27 @@ filter_loci <- function(x, locus_filter, description = "") {
 filter_overcounts <- function(x, description = "replace overcounts with NA") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   
   # replace over-counts with NA
-  w <- which(x$counts > x$coverage, arr.ind = TRUE)
-  x$coverage[w] <- NA
-  x$counts[w] <- NA
+  
+  # switch based on data type
+  if (class(x) == "mipanalyzer_biallelic") {
+    
+    w <- which(x$counts > x$coverage, arr.ind = TRUE)
+    x$coverage[w] <- NA
+    x$counts[w] <- NA
+    
+  } else {
+    
+    for (i in seq_along(x$counts)[1]) {
+      
+      w <- which(x$counts[i,,] > x$coverage, arr.ind = TRUE)
+      x$coverage[w] <- NA
+      x$counts[i,,][w] <- NA
+      
+    }
+  }
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -563,8 +579,8 @@ filter_coverage_samples <- function(x,
   # drop samples with too many low-coverage loci
   x$coverage <- x$coverage[percent_low_coverage <= max_low_coverage,,drop = FALSE]
   switch (class(x),
-    "mipanalyzer_biallelic" = x$counts <- x$counts[percent_low_coverage <= max_low_coverage,,drop = FALSE],
-    "mipanalyzer_multiallelic" = x$counts <- x$counts[,percent_low_coverage <= max_low_coverage,,drop = FALSE]
+          "mipanalyzer_biallelic" = x$counts <- x$counts[percent_low_coverage <= max_low_coverage,,drop = FALSE],
+          "mipanalyzer_multiallelic" = x$counts <- x$counts[,percent_low_coverage <= max_low_coverage,,drop = FALSE]
   )
   x$samples <- x$samples[percent_low_coverage <= max_low_coverage,,drop = FALSE]
   
@@ -945,7 +961,7 @@ get_genomic_distance <- function(x, cutoff = 0.1, report_progress = TRUE) {
     # calculate distance between sample i and all others
     dab <- sweep(1-wsaf[-(1:i),,drop = FALSE], 2, wsaf[i,], "*") + sweep(wsaf[-(1:i),,drop = FALSE], 2, 1-wsaf[i,], "*")
     dab_weighted <- sweep(dab, 2, weight, "*")
-    dist_mat[i,-(1:i)] <- rowSums(dab_weighted, na.rm = TRUE)
+    dist_mat[i,-(1:i)] <- rowSums(dab_weighted, na.rm = TRUE) / apply(dab_weighted, 1, function(x) sum(!is.na(x)))
     
     # update progress bar
     if (report_progress) {
@@ -1062,12 +1078,14 @@ plot_pca_variance <- function(pca, num_components = 10) {
 #' @param num_components numeric for number of components used. Default = 2.
 #' @param col vector by which samples are coloured.
 #' @param col_palette vector of colours for each group.
+#' @param ggplot boolean for plotting using ggplot. Default = FALSE
 #'
 #' @importFrom plotly plot_ly
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 
-plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
+plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL,
+                     ggplot = FALSE) {
   
   # check inputs
   assert_custom_class(pca, "prcomp")
@@ -1090,9 +1108,18 @@ plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
   if (num_components == 2) {
     # scatterplot of first 2 principal components
     # 2D scatter
-    plot1 <- plot_ly(as.data.frame(pca$x), x = ~PC1, y = ~PC2,
-                     color = col, type = "scatter", colors = col_palette,
-                     mode = "markers", marker = list(size = 5))
+    if (ggplot) {
+      
+      plot1 <- ggplot2::ggplot(as.data.frame(pca$x), aes(x = PC1, y = PC2)) + 
+        geom_point(color = col_palette[col], size = 3) 
+      
+    } else {
+      
+      plot1 <- plot_ly(as.data.frame(pca$x), x = ~PC1, y = ~PC2,
+                       color = col, type = "scatter", colors = col_palette,
+                       mode = "markers", marker = list(size = 5))
+      
+    }
   }
   
   if (num_components == 3) {
@@ -1344,6 +1371,62 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = FALSE, report_prog
   return(ret)
 }
 
+
+#------------------------------------------------
+#' @title Get identity by mixture
+#'
+#' @description Get identity by mixture distance.
+#'
+#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param tol tolerance on mixture comparisons. Defeault = 0
+#' @param diagonal Should the diagonal of the distance matrix be changed to a
+#'   given value. Deafult = NULL, which cause no changes.
+#' @param report_progress if \code{TRUE} then a progress bar is printed to the
+#'   console.
+#'
+#' @export
+
+get_IB_mixture <- function(x, tol = 0, diagonal = NULL, report_progress = TRUE) {
+  
+  # check inputs
+  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_single_numeric(tol)
+  assert_single_logical(report_progress)
+  
+  # get basic quantities
+  nsamp <- nrow(x$samples)
+  
+  # get within-sample allele frequencies
+  wsaf <- get_wsaf(x, impute = FALSE)
+  
+  # initialise progress bar
+  if (report_progress) {
+    pbar <- txtProgressBar(0, nsamp, style = 3)
+  }
+  
+  # compute all pairwise IBS
+  ret <- matrix(NA, nsamp, nsamp)
+  for (i in 1:nsamp) {
+    if (tol == 0) {
+      ret[i,] <- rowMeans(outer(rep(1,nsamp), wsaf[i,]) == wsaf, na.rm = TRUE)
+    } else {
+      ret[i,] <- rowMeans(abs(outer(rep(1,nsamp), wsaf[i,]) - wsaf) <= tol, na.rm = TRUE)  
+    }
+    # update progress bar
+    if (report_progress) {
+      setTxtProgressBar(pbar, i)
+    }
+  }
+  
+  if (!is.null(diagonal)) {
+    ret[diag(ret)] <- diagonal
+  }
+  
+  # return distance matrix
+  return(ret)
+}
+
+
 #------------------------------------------------
 #' @title Get identity by state (IBS) distance
 #'
@@ -1355,12 +1438,14 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = FALSE, report_prog
 #' @param x object of class \code{mipanalyzer_biallelic}.
 #' @param ignore_het whether to ignore heterzygous comparisons, or alternatively
 #'   call the major allele at every locus (see details).
+#' @param diagonal Should the diagonal of the distance matrix be changed to a
+#'   given value. Deafult = NULL, which cause no changes.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console.
 #'
 #' @export
 
-get_IBS_distance <- function(x, ignore_het = TRUE, report_progress = TRUE) {
+get_IBS_distance <- function(x, ignore_het = TRUE, diagonal = NULL, report_progress = TRUE) {
   
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
@@ -1395,7 +1480,10 @@ get_IBS_distance <- function(x, ignore_het = TRUE, report_progress = TRUE) {
       setTxtProgressBar(pbar, i)
     }
   }
-  ret[row(ret) >= col(ret)] <- NA
+  
+  if (!is.null(diagonal)) {
+    ret[diag(ret)] <- diagonal
+  }
   
   # return distance matrix
   return(ret)

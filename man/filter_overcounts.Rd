@@ -7,7 +7,8 @@
 filter_overcounts(x, description = "replace overcounts with NA")
 }
 \arguments{
-\item{x}{object of class \code{mipanalyzer_biallelic}.}
+\item{x}{object of class \code{mipanalyzer_biallelic} or
+\code{mipanalyzer_multiallelic}.}
 
 \item{description}{brief description of the filter, to be saved in the filter
 history.}

@@ -4,3 +4,6 @@ inst/doc
 .RData
 .Ruserdata
 ignore/
+scripts
+vignettes/introduction_cache
+vignettes_src/introduction_cache

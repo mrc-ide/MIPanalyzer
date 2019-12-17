@@ -1,0 +1,126 @@
+---
+title: "Introdution"
+author: "OJ Watson"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    fig_width: 8 
+    fig_height: 6
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r, echo=FALSE}
+# set seed for reproducible widget id
+if (requireNamespace("htmltools", quietly = TRUE)) {
+  htmlwidgets::setWidgetIdSeed(42)
+}
+```
+
+First install the package
+
+```{r installation}
+# devtools::install_github("OJWatson/MIPanalyzer")
+```
+
+Read in a multiallelic vcf, replacing file path as needed:
+
+```{r mutliallelic read in, cache=TRUE, cache.vars=TRUE}
+vcf_file <- file.path(here::here(), "scripts", "variants", "variants.vcf.gz")
+t <- MIPanalyzer::vcf2mipanalyzer_multiallelic(vcf_file)
+```
+
+First check to have a look at the coverage
+
+```{r coverage plot}
+MIPanalyzer::plot_coverage(t)
+```
+
+Looking at the coverage plot, there are some samples and loci that are consistently
+so we will have to do some filtering. 
+
+Firstly, default filters. Lets use these on a copy of our read in data set
+
+```{r first filtering}
+dat <- t
+dat <- MIPanalyzer::filter_overcounts(x = dat)
+dat <- MIPanalyzer::filter_counts(x = dat, count_min = 2)
+dat <- MIPanalyzer::filter_wsaf(x = dat, wsaf_min = 0.01)
+dat <- MIPanalyzer::filter_loci_invariant(dat)
+```
+
+Now let's filter for bad samples first. To help with this let's explore the 
+coverage in the samples
+
+```{r plot sample coverage}
+g3 <- MIPanalyzer::explore_filter_coverage_samples(dat, min_coverage = 3, max_low_coverage = 50)
+g5 <- MIPanalyzer::explore_filter_coverage_samples(dat, min_coverage = 5, max_low_coverage = 50)
+g10 <- MIPanalyzer::explore_filter_coverage_samples(dat, min_coverage = 10, max_low_coverage = 50)
+g20 <- MIPanalyzer::explore_filter_coverage_samples(dat, min_coverage = 20, max_low_coverage = 50)
+cowplot::plot_grid(g3, g5, g10, g20)
+```
+
+Okay, so 10 seems to be a good balance of quality and not throwing too many samples away
+
+```{r coverage filtering samples}
+dat <- MIPanalyzer::filter_coverage_samples(
+  x = dat,
+  min_coverage = 10,
+  max_low_coverage = 50,
+  replace_low_coverage = TRUE
+)
+```
+
+Now, do the same for the loci
+
+```{r plot loci filtering}
+g3 <- MIPanalyzer::explore_filter_coverage_loci(dat, min_coverage = 3, max_low_coverage = 50)
+g5 <- MIPanalyzer::explore_filter_coverage_loci(dat, min_coverage = 5, max_low_coverage = 50)
+g10 <- MIPanalyzer::explore_filter_coverage_loci(dat, min_coverage = 10, max_low_coverage = 50)
+g20 <- MIPanalyzer::explore_filter_coverage_loci(dat, min_coverage = 20, max_low_coverage = 50)
+cowplot::plot_grid(g3, g5, g10, g20)
+```
+
+Again, 10 is a good minimum coverage
+
+```{r coverage filtering loci}
+dat <- MIPanalyzer::filter_coverage_loci(
+  x = dat,
+  min_coverage = 10,
+  max_low_coverage = 50,
+  replace_low_coverage = TRUE
+)
+```
+
+Let's also remove the mitochnodrail genome for now:
+
+```{r mito filtering}
+dat <- MIPanalyzer::filter_loci(x = dat, 
+                                locus_filter = dat$loci$CHROM != "chrM", 
+                                description = "remove mitochondrial genome")
+```
+
+Now we can calculate the within-sample allele frequency
+
+```{r wsaf}
+wsaf <- MIPanalyzer::get_wsaf(dat)
+pca <- MIPanalyzer::pca_wsaf(wsaf[1,,])
+MIPanalyzer::plot_pca(pca, ggplot = TRUE)
+```
+
+We can see that our pca does seperate out the data. Which loci are driving this:
+
+```{r pca contribution, fig_height = 12, out.width = '100%'}
+MIPanalyzer::plot_pca_contribution(pca, 2, 
+                                   chrom = as.numeric(substr(dat$loci$CHROM, 4, 5)), 
+                                   pos = dat$loci$POS)
+```
