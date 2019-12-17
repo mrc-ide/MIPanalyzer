@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vignette Title • MIPanalyzer</title>
+<title>Introdution • MIPanalyzer</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Vignette Title">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Introdution">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -70,8 +70,8 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Vignette Title</h1>
-                        <h4 class="author">Vignette Author</h4>
+      <h1>Introdution</h1>
+                        <h4 class="author">OJ Watson</h4>
             
             <h4 class="date">2019-12-17</h4>
       
@@ -110,7 +110,7 @@
 <a class="sourceLine" id="cb2-23" data-line-number="23"><span class="co">#&gt; All variants processed</span></a></code></pre></div>
 <p>First check to have a look at the coverage</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/plot_coverage.html">plot_coverage</a></span>(t)</a></code></pre></div>
-<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/introduction_files/figure-html/coverage%20plot-1.png"><!-- --></p>
+<p><img src="introduction_files/figure-html/coverage%20plot-1.png" width="700"></p>
 <p>Looking at the coverage plot, there are some samples and loci that are consistently so we will have to do some filtering.</p>
 <p>Firstly, default filters. Lets use these on a copy of our read in data set</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">dat &lt;-<span class="st"> </span>t</a>
@@ -124,7 +124,7 @@
 <a class="sourceLine" id="cb5-3" data-line-number="3">g10 &lt;-<span class="st"> </span>MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/explore_filter_coverage_samples.html">explore_filter_coverage_samples</a></span>(dat, <span class="dt">min_coverage =</span> <span class="dv">10</span>, <span class="dt">max_low_coverage =</span> <span class="dv">50</span>)</a>
 <a class="sourceLine" id="cb5-4" data-line-number="4">g20 &lt;-<span class="st"> </span>MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/explore_filter_coverage_samples.html">explore_filter_coverage_samples</a></span>(dat, <span class="dt">min_coverage =</span> <span class="dv">20</span>, <span class="dt">max_low_coverage =</span> <span class="dv">50</span>)</a>
 <a class="sourceLine" id="cb5-5" data-line-number="5">cowplot<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/cowplot/man/plot_grid.html">plot_grid</a></span>(g3, g5, g10, g20)</a></code></pre></div>
-<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/introduction_files/figure-html/plot%20sample%20coverage-1.png"><!-- --></p>
+<p><img src="introduction_files/figure-html/plot%20sample%20coverage-1.png" width="700"></p>
 <p>Okay, so 10 seems to be a good balance of quality and not throwing too many samples away</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1">dat &lt;-<span class="st"> </span>MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/filter_coverage_samples.html">filter_coverage_samples</a></span>(</a>
 <a class="sourceLine" id="cb6-2" data-line-number="2">  <span class="dt">x =</span> dat,</a>
@@ -138,7 +138,7 @@
 <a class="sourceLine" id="cb7-3" data-line-number="3">g10 &lt;-<span class="st"> </span>MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/explore_filter_coverage_loci.html">explore_filter_coverage_loci</a></span>(dat, <span class="dt">min_coverage =</span> <span class="dv">10</span>, <span class="dt">max_low_coverage =</span> <span class="dv">50</span>)</a>
 <a class="sourceLine" id="cb7-4" data-line-number="4">g20 &lt;-<span class="st"> </span>MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/explore_filter_coverage_loci.html">explore_filter_coverage_loci</a></span>(dat, <span class="dt">min_coverage =</span> <span class="dv">20</span>, <span class="dt">max_low_coverage =</span> <span class="dv">50</span>)</a>
 <a class="sourceLine" id="cb7-5" data-line-number="5">cowplot<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/cowplot/man/plot_grid.html">plot_grid</a></span>(g3, g5, g10, g20)</a></code></pre></div>
-<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/introduction_files/figure-html/plot%20loci%20filtering-1.png"><!-- --></p>
+<p><img src="introduction_files/figure-html/plot%20loci%20filtering-1.png" width="700"></p>
 <p>Again, 10 is a good minimum coverage</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1">dat &lt;-<span class="st"> </span>MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/filter_coverage_loci.html">filter_coverage_loci</a></span>(</a>
 <a class="sourceLine" id="cb8-2" data-line-number="2">  <span class="dt">x =</span> dat,</a>
@@ -158,7 +158,7 @@
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">MIPanalyzer<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/MIPanalyzer/man/plot_pca_contribution.html">plot_pca_contribution</a></span>(pca, <span class="dv">2</span>, </a>
 <a class="sourceLine" id="cb11-2" data-line-number="2">                                   <span class="dt">chrom =</span> <span class="kw"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/substr.html">substr</a></span>(dat<span class="op">$</span>loci<span class="op">$</span>CHROM, <span class="dv">4</span>, <span class="dv">5</span>)), </a>
 <a class="sourceLine" id="cb11-3" data-line-number="3">                                   <span class="dt">pos =</span> dat<span class="op">$</span>loci<span class="op">$</span>POS)</a></code></pre></div>
-<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/introduction_files/figure-html/pca%20contribution-1.png"><!-- --></p>
+<p><img src="introduction_files/figure-html/pca%20contribution-1.png" width="100%"></p>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

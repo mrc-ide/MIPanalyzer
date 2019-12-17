@@ -32,7 +32,16 @@ reference:
       - plot_pca_contribution
       - plot_pca_variance
       - plot_pcoa
-
+  - title: "Get Distances"
+    desc: "Genetic Distances and WSAF"
+    contents:
+      - get_IBS_distance
+      - get_IB_mixture
+      - get_genomic_distance
+      - get_spatial_distance
+      - get_wsaf
+      - inbreeding_mle
+      
 navbar:
   type: default
   left:
