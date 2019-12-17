@@ -4,8 +4,11 @@
 \alias{filter_counts}
 \title{Filter alleles based on raw counts}
 \usage{
-filter_counts(x, count_min = 2,
-  description = "filter individual allele counts")
+filter_counts(
+  x,
+  count_min = 2,
+  description = "filter individual allele counts"
+)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic} or

@@ -1,0 +1,46 @@
+url: https://mrc-ide.github.io/MIPanalyzer/
+  
+template:
+  params:
+    bootswatch: flatly
+
+reference:
+  - title: "Reading vcf data"
+    desc: "Reading in vcf data output by MIPwrangler"
+    contents:
+      - vcf2mipanalyzer_biallelic
+      - vcf2mipanalyzer_multiallelic
+  - title: "Filtering MIPanalyzer objects"
+    desc: "Functions for running pathweaver c++ programs"
+    contents:
+      - filter_counts
+      - filter_coverage_loci
+      - filter_coverage_samples
+      - filter_loci
+      - filter_loci_invariant
+      - filter_overcounts
+      - filter_samples
+      - filter_wsaf
+      - shared_pathways
+  - title: "Plotting"
+    desc: "Plotting PCA outputs"
+    contents:
+      - pca_wsaf
+      - pcoa_genomic_distance
+      - plot_coverage
+      - plot_map
+      - plot_pca
+      - plot_pca_contribution
+      - plot_pca_variance
+      - plot_pcoa
+
+navbar:
+  type: default
+  left:
+    - href: index.html
+      icon: fa-home
+    - text: Reference
+      href: reference/index.html
+  right:
+    - icon: fa-github
+      href: https://github.com/mrc-ide/MIPanalyzer

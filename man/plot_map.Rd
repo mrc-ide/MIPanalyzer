@@ -4,10 +4,15 @@
 \alias{plot_map}
 \title{Produce ggplot map}
 \usage{
-plot_map(x_limits = c(12, 35), y_limits = c(-13, 5),
-  col_country = grey(0.3), col_country_border = grey(0.5),
-  size_country_border = 0.5, col_sea = grey(0.1),
-  resolution = "coarse")
+plot_map(
+  x_limits = c(12, 35),
+  y_limits = c(-13, 5),
+  col_country = grey(0.3),
+  col_country_border = grey(0.5),
+  size_country_border = 0.5,
+  col_sea = grey(0.1),
+  resolution = "coarse"
+)
 }
 \arguments{
 \item{x_limits}{longitude limits of map.}

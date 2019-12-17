@@ -81,7 +81,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   # extract coverage and counts matrices
   coverage <- t(vcfR::extract.gt(vcf, element = "DP", as.numeric = T))
   counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
-  counts <- masplit(counts_raw, record = 1, sort = FALSE, decreasing = FALSE)
+  counts <- vcfR::masplit(counts_raw, record = 1, sort = FALSE, decreasing = FALSE)
   
   # check that all missing fields correspond between coverage and counts
   if (!identical(is.na(coverage), is.na(counts))) {
@@ -162,7 +162,7 @@ vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRU
   counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
   counts <- array(NA, dim = c(4, nrow(counts_raw), ncol(counts_raw)))
   for (i in 1:4) {
-    counts[i,,] <- masplit(counts_raw, record = i, sort = FALSE)
+    counts[i,,] <- vcfR::masplit(counts_raw, record = i, sort = FALSE)
   }
   coverage <- colSums(counts, na.rm = TRUE)
   coverage[coverage == 0] <- NA

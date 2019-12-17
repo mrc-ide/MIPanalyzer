@@ -4,8 +4,7 @@
 \alias{get_IBS_distance}
 \title{Get identity by state (IBS) distance}
 \usage{
-get_IBS_distance(x, ignore_het = TRUE, diagonal = NULL,
-  report_progress = TRUE)
+get_IBS_distance(x, ignore_het = TRUE, diagonal = NULL, report_progress = TRUE)
 }
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}

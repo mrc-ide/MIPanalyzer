@@ -4,8 +4,14 @@
 \alias{plot_pca_contribution}
 \title{Plot PCA contribution of each variable}
 \usage{
-plot_pca_contribution(pca, component = 1, chrom, pos,
-  locus_type = NULL, y_buffer = 0)
+plot_pca_contribution(
+  pca,
+  component = 1,
+  chrom,
+  pos,
+  locus_type = NULL,
+  y_buffer = 0
+)
 }
 \arguments{
 \item{pca}{output of \code{pca_wsaf()} function.}
