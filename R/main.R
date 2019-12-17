@@ -64,11 +64,11 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   
   # check that vcf is normalised
   vcf_unnormalised <- vcf@fix %>%
-                      tibble::as.tibble(.) %>%
-                      dplyr::group_by(CHROM, POS) %>%
-                      dplyr::summarise(locicount = n()) %>%
-                      dplyr::ungroup() %>%
-                      dplyr::summarise(maxlocicount = max(locicount)) != 1
+    tibble::as.tibble(.) %>%
+    dplyr::group_by(CHROM, POS) %>%
+    dplyr::summarise(locicount = n()) %>%
+    dplyr::ungroup() %>%
+    dplyr::summarise(maxlocicount = max(locicount)) != 1
   if (vcf_unnormalised) {
     stop("This is not a normalized vcf. Consider running bcftools norm, and/or review how the vcf was created")
   }
@@ -225,8 +225,8 @@ filter_samples <- function(x, sample_filter, description = "") {
   # apply filter
   x$coverage <- x$coverage[sample_filter,,drop = FALSE]
   switch (class(x),
-    "mipanalyzer_biallelic" = x$counts <- x$counts[sample_filter,,drop = FALSE],
-    "mipanalyzer_multiallelic" = x$counts <- x$counts[,sample_filter,,drop = FALSE]
+          "mipanalyzer_biallelic" = x$counts <- x$counts[sample_filter,,drop = FALSE],
+          "mipanalyzer_multiallelic" = x$counts <- x$counts[,sample_filter,,drop = FALSE]
   )
   x$samples <- x$samples[sample_filter,,drop = FALSE]
   
@@ -290,7 +290,8 @@ filter_loci <- function(x, locus_filter, description = "") {
 #' @description Filter out over-counts, defined as count > coverage.
 #'   Replace any such element with NA.
 #' 
-#' @param x object of class \code{mipanalyzer_biallelic}.
+#' @param x object of class \code{mipanalyzer_biallelic} or
+#'   \code{mipanalyzer_multiallelic}.
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
@@ -299,12 +300,27 @@ filter_loci <- function(x, locus_filter, description = "") {
 filter_overcounts <- function(x, description = "replace overcounts with NA") {
   
   # check inputs
-  assert_custom_class(x, "mipanalyzer_biallelic")
+  assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   
   # replace over-counts with NA
-  w <- which(x$counts > x$coverage, arr.ind = TRUE)
-  x$coverage[w] <- NA
-  x$counts[w] <- NA
+  
+  # switch based on data type
+  if (class(x) == "mipanalyzer_biallelic") {
+    
+    w <- which(x$counts > x$coverage, arr.ind = TRUE)
+    x$coverage[w] <- NA
+    x$counts[w] <- NA
+    
+  } else {
+    
+    for (i in seq_along(x$counts)[1]) {
+      
+      w <- which(x$counts[i,,] > x$coverage, arr.ind = TRUE)
+      x$coverage[w] <- NA
+      x$counts[i,,][w] <- NA
+      
+    }
+  }
   
   # record filter
   function_call <- paste0(deparse(match.call()), collapse = "")
@@ -563,8 +579,8 @@ filter_coverage_samples <- function(x,
   # drop samples with too many low-coverage loci
   x$coverage <- x$coverage[percent_low_coverage <= max_low_coverage,,drop = FALSE]
   switch (class(x),
-    "mipanalyzer_biallelic" = x$counts <- x$counts[percent_low_coverage <= max_low_coverage,,drop = FALSE],
-    "mipanalyzer_multiallelic" = x$counts <- x$counts[,percent_low_coverage <= max_low_coverage,,drop = FALSE]
+          "mipanalyzer_biallelic" = x$counts <- x$counts[percent_low_coverage <= max_low_coverage,,drop = FALSE],
+          "mipanalyzer_multiallelic" = x$counts <- x$counts[,percent_low_coverage <= max_low_coverage,,drop = FALSE]
   )
   x$samples <- x$samples[percent_low_coverage <= max_low_coverage,,drop = FALSE]
   
