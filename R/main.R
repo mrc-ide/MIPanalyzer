@@ -1078,12 +1078,14 @@ plot_pca_variance <- function(pca, num_components = 10) {
 #' @param num_components numeric for number of components used. Default = 2.
 #' @param col vector by which samples are coloured.
 #' @param col_palette vector of colours for each group.
+#' @param ggplot boolean for plotting using ggplot. Default = FALSE
 #'
 #' @importFrom plotly plot_ly
 #' @importFrom RColorBrewer brewer.pal
 #' @export
 
-plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
+plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL,
+                     ggplot = FALSE) {
   
   # check inputs
   assert_custom_class(pca, "prcomp")
@@ -1106,9 +1108,18 @@ plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL) {
   if (num_components == 2) {
     # scatterplot of first 2 principal components
     # 2D scatter
-    plot1 <- plot_ly(as.data.frame(pca$x), x = ~PC1, y = ~PC2,
-                     color = col, type = "scatter", colors = col_palette,
-                     mode = "markers", marker = list(size = 5))
+    if (ggplot) {
+      
+      plot1 <- ggplot2::ggplot(as.data.frame(pca$x), aes(x = PC1, y = PC2)) + 
+        geom_point(color = col_palette[col], size = 3) 
+      
+    } else {
+      
+      plot1 <- plot_ly(as.data.frame(pca$x), x = ~PC1, y = ~PC2,
+                       color = col, type = "scatter", colors = col_palette,
+                       mode = "markers", marker = list(size = 5))
+      
+    }
   }
   
   if (num_components == 3) {

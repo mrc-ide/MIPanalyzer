@@ -114,7 +114,7 @@ Now we can calculate the within-sample allele frequency
 ```{r wsaf}
 wsaf <- MIPanalyzer::get_wsaf(dat)
 pca <- MIPanalyzer::pca_wsaf(wsaf[1,,])
-MIPanalyzer::plot_pca(pca)
+MIPanalyzer::plot_pca(pca, ggplot = TRUE)
 ```
 
 We can see that our pca does seperate out the data. Which loci are driving this:
