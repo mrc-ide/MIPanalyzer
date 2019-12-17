@@ -117,7 +117,13 @@
     <p>Plots either the first 2 or 3 principal components.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_pca</span>(<span class='no'>pca</span>, <span class='kw'>num_components</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>col</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>col_palette</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_pca</span>(
+  <span class='no'>pca</span>,
+  <span class='kw'>num_components</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>col</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>col_palette</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>ggplot</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -137,6 +143,10 @@
     <tr>
       <th>col_palette</th>
       <td><p>vector of colours for each group.</p></td>
+    </tr>
+    <tr>
+      <th>ggplot</th>
+      <td><p>boolean for plotting using ggplot. Default = FALSE</p></td>
     </tr>
     </table>
 

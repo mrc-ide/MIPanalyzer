@@ -6,3 +6,4 @@ inst/doc
 ignore/
 scripts
 vignettes/introduction_cache
+vignettes_src/introduction_cache

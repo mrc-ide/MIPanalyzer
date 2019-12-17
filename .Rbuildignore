@@ -16,3 +16,5 @@ vignettes_src
 ^codemeta\.json$
 ^docs$
 docs
+vignettes/introduction_cache
+vignettes_src/introduction_cache
