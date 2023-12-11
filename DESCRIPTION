@@ -2,8 +2,9 @@ Package: MIPanalyzer
 Type: Package
 Title: Filtering and analysis of MIP data
 Version: 1.0.0
-Author: Bob Verity
-Maintainer: Bob Verity <r.verity@imperial.ac.uk>
+Authors@R: as.person(c(
+    "Bob Verity <r.verity@imperial.ac.uk> [aut, cre]"
+  ))
 Description: Filtering and analysis of MIP data.
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -12,7 +13,6 @@ LinkingTo:
 Imports: 
     Rcpp,
     vcfR,
-    magrittr,
     dplyr,
     reshape2,
     RColorBrewer,
@@ -30,5 +30,8 @@ SystemRequirements: C++11
 Suggests: 
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    here,
+    kableExtra,
+    tidyverse
 VignetteBuilder: knitr

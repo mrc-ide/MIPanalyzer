@@ -19,3 +19,4 @@ docs
 vignettes/introduction_cache
 vignettes_src/introduction_cache
 ^\.github$
+^index.md$
