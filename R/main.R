@@ -13,6 +13,7 @@ NULL
 #'
 #' @param name the name of a file within the inst/extdata folder.
 #'
+#' @importFrom data.table fread
 #' @export
 
 mipanalyzer_file <- function(name) {
@@ -29,7 +30,7 @@ mipanalyzer_file <- function(name) {
   if (ext == "rds") {
     ret <- readRDS(name_full)
   } else {
-    ret <- fread(name_full, data.table = FALSE)
+    ret <- data.table::fread(name_full, data.table = FALSE)
   }
   
   return(ret)
@@ -48,6 +49,9 @@ mipanalyzer_file <- function(name) {
 
 vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) {
   
+  # avoid "no visible binding" notes
+  CHROM <- POS <- QUAL <- n <- locicount <- NULL
+  
   # check inputs
   if (!xor(!is.null(file), !is.null(vcfR))) {
     stop("Must specify one input: either a raw vcf file path or a vcfR object")
@@ -62,13 +66,16 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
     vcf <- vcfR::read.vcfR(file = file, verbose = verbose)
   }
   
+  message("Processing")
+  
   # check that vcf is normalised
-  vcf_unnormalised <- vcf@fix %>%
-    tibble::as.tibble(.) %>%
-    dplyr::group_by(CHROM, POS) %>%
-    dplyr::summarise(locicount = n()) %>%
-    dplyr::ungroup() %>%
-    dplyr::summarise(maxlocicount = max(locicount)) != 1
+  vcf_unnormalised <- vcf@fix |>
+    tibble::as_tibble() |>
+    dplyr::group_by(CHROM, POS) |>
+    dplyr::summarise(locicount = dplyr::n()) |>
+    dplyr::ungroup() |>
+    dplyr::pull(locicount) |>
+    max() != 1
   if (vcf_unnormalised) {
     stop("This is not a normalized vcf. Consider running bcftools norm, and/or review how the vcf was created")
   }
@@ -79,7 +86,7 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   }
   
   # extract coverage and counts matrices
-  coverage <- t(vcfR::extract.gt(vcf, element = "DP", as.numeric = T))
+  coverage <- t(vcfR::extract.gt(vcf, element = "DP", as.numeric = TRUE))
   counts_raw <- t(vcfR::extract.gt(vcf, element = "AD"))
   counts <- vcfR::masplit(counts_raw, record = 1, sort = FALSE, decreasing = FALSE)
   
@@ -92,9 +99,10 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
   samples <- data.frame(SAMPLE_ID = colnames(vcf@gt)[-1], stringsAsFactors = FALSE)
   
   # extract loci and specify some columns classes
-  loci <- as.data.frame(vcf@fix)
-  loci$POS <- as.numeric(as.character(loci$POS))
-  loci$QUAL <- as.numeric(as.character(loci$QUAL))
+  loci <- vcf@fix |>
+    as.data.frame() |>
+    dplyr::mutate(POS = as.numeric(as.character(POS)),
+                  QUAL = as.numeric(as.character(QUAL)))
   
   # keep vcf meta for downstream processes
   meta <- vcf@meta
@@ -115,6 +123,8 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
               loci = loci,
               filter_history = filter_history,
               vcfmeta = meta)
+  
+  message("Done")
   
   # return in mipanalyzer_biallelic class
   class(ret) <- "mipanalyzer_biallelic"
@@ -133,6 +143,9 @@ vcf2mipanalyzer_biallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) 
 
 vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRUE) {
   
+  # avoid "no visible binding" notes
+  CHROM <- POS <- QUAL <- n <- locicount <- NULL
+  
   # check inputs
   if (!xor(!is.null(file), !is.null(vcfR))) {
     stop("Must specify one input: either a raw vcf file path or a vcfR object")
@@ -147,13 +160,16 @@ vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRU
     vcf <- vcfR::read.vcfR(file = file, verbose = verbose)
   }
   
+  message("Processing")
+  
   # check that vcf is normalised
-  vcf_unnormalised <- vcf@fix %>%
-    tibble::as.tibble(.) %>%
-    dplyr::group_by(CHROM, POS) %>%
-    dplyr::summarise(locicount = n()) %>%
-    dplyr::ungroup() %>%
-    dplyr::summarise(maxlocicount = max(locicount)) != 1
+  vcf_unnormalised <- vcf@fix |>
+    tibble::as_tibble() |>
+    dplyr::group_by(CHROM, POS) |>
+    dplyr::summarise(locicount = dplyr::n()) |>
+    dplyr::ungroup() |>
+    dplyr::pull(locicount) |>
+    max() != 1
   if (vcf_unnormalised) {
     stop("This is not a normalized vcf. Consider running bcftools norm, and/or review how the vcf was created")
   }
@@ -171,9 +187,10 @@ vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRU
   samples <- data.frame(SAMPLE_ID = colnames(vcf@gt)[-1], stringsAsFactors = FALSE)
   
   # extract loci and specify some columns classes
-  loci <- as.data.frame(vcf@fix)
-  loci$POS <- as.numeric(as.character(loci$POS))
-  loci$QUAL <- as.numeric(as.character(loci$QUAL))
+  loci <- vcf@fix |>
+    as.data.frame() |>
+    dplyr::mutate(POS = as.numeric(as.character(POS)),
+                  QUAL = as.numeric(as.character(QUAL)))
   
   # keep vcf meta for downstream processes
   meta <- vcf@meta
@@ -194,6 +211,8 @@ vcf2mipanalyzer_multiallelic <- function(file = NULL, vcfR = NULL, verbose = TRU
               loci = loci,
               filter_history = filter_history,
               vcfmeta = meta)
+  
+  message("Done")
   
   # return in mipanalyzer_biallelic class
   class(ret) <- "mipanalyzer_multiallelic"
@@ -305,7 +324,7 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
   # replace over-counts with NA
   
   # switch based on data type
-  if (class(x) == "mipanalyzer_biallelic") {
+  if (is(x, "mipanalyzer_biallelic")) {
     
     w <- which(x$counts > x$coverage, arr.ind = TRUE)
     x$coverage[w] <- NA
@@ -346,6 +365,7 @@ filter_overcounts <- function(x, description = "replace overcounts with NA") {
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
+#' @importFrom methods is
 #' @export
 
 filter_counts <- function(x, count_min = 2, description = "filter individual allele counts") {
@@ -355,7 +375,7 @@ filter_counts <- function(x, count_min = 2, description = "filter individual all
   assert_single_pos_int(count_min, zero_allowed = FALSE)
   
   # switch based on data type
-  if (class(x) == "mipanalyzer_biallelic") {
+  if (is(x, "mipanalyzer_biallelic")) {
     
     # drop alleles below threshold
     w <- which(!is.na(x$counts) & x$counts < count_min, arr.ind = TRUE)
@@ -400,6 +420,7 @@ filter_counts <- function(x, count_min = 2, description = "filter individual all
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
+#' @importFrom methods is
 #' @export
 
 filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual allele WSAF") {
@@ -412,7 +433,7 @@ filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual all
   wsaf <- get_wsaf(x, impute = FALSE)
   
   # switch based on data type
-  if (class(x) == "mipanalyzer_biallelic") {
+  if (is(x, "mipanalyzer_biallelic")) {
     
     # drop alleles below threshold
     w <- which(!is.na(wsaf) & wsaf < wsaf_min, arr.ind = TRUE)
@@ -454,6 +475,7 @@ filter_wsaf <- function(x, wsaf_min = 0.01, description = "filter individual all
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
+#' @importFrom methods is
 #' @export
 
 filter_loci_invariant <- function(x, description = "filter loci to drop invariant sites") {
@@ -465,7 +487,7 @@ filter_loci_invariant <- function(x, description = "filter loci to drop invarian
   wsaf <- get_wsaf(x, impute = FALSE)
   
   # switch based on data type
-  if (class(x) == "mipanalyzer_biallelic") {
+  if (is(x, "mipanalyzer_biallelic")) {
     
     # identify invariant sites
     invariant <- apply(wsaf, 2, function(y) {
@@ -563,6 +585,7 @@ explore_filter_coverage_samples <- function(x,
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
+#' @importFrom methods is
 #' @export
 
 filter_coverage_samples <- function(x,
@@ -593,7 +616,7 @@ filter_coverage_samples <- function(x,
   if (replace_low_coverage) {
     w <- which(x$coverage < min_coverage, arr.ind = TRUE)
     x$coverage[w] <- NA
-    if (class(x) == "mipanalyzer_multiallelic") {
+    if (is(x, "mipanalyzer_multiallelic")) {
       for (i in 1:4) {
         x$counts[i,,][w] <- NA
       }
@@ -688,6 +711,7 @@ explore_filter_coverage_loci <- function(x,
 #' @param description brief description of the filter, to be saved in the filter
 #'   history.
 #'
+#' @importFrom methods is
 #' @export
 
 filter_coverage_loci <- function(x,
@@ -718,7 +742,7 @@ filter_coverage_loci <- function(x,
   if (replace_low_coverage) {
     w <- which(x$coverage < min_coverage, arr.ind = TRUE)
     x$coverage[w] <- NA
-    if (class(x) == "mipanalyzer_multiallelic") {
+    if (is(x, "mipanalyzer_multiallelic")) {
       for (i in 1:4) {
         x$counts[i,,][w] <- NA
       }
@@ -751,6 +775,9 @@ filter_coverage_loci <- function(x,
 
 plot_coverage <- function(x) {
   
+  # avoide "no visible binding" notes
+  Var1 <- Var2 <- value <- NULL
+  
   # check inputs
   assert_custom_class(x, c("mipanalyzer_biallelic", "mipanalyzer_multiallelic"))
   
@@ -777,6 +804,7 @@ plot_coverage <- function(x) {
 #' @param FUN function used to impute missing values. Default = `median`
 #' @param ... other arguments to pass to \code{FUN}.
 #' 
+#' @importFrom methods is
 #' @export
 
 get_wsaf <- function(x, impute = TRUE, FUN = median, ...) {
@@ -786,7 +814,7 @@ get_wsaf <- function(x, impute = TRUE, FUN = median, ...) {
   assert_single_logical(impute)
   
   # switch based on class
-  if (class(x) == "mipanalyzer_biallelic") {
+  if (is(x, "mipanalyzer_biallelic")) {
     
     # get within-sample allele frequencies
     wsaf <- x$counts/x$coverage
@@ -1092,6 +1120,9 @@ plot_pca_variance <- function(pca, num_components = 10) {
 plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL,
                      ggplot = FALSE) {
   
+  # avoid "no visible binding" notes
+  PC1 <- PC2 <- NULL
+  
   # check inputs
   assert_custom_class(pca, "prcomp")
   assert_in(num_components, c(2,3))
@@ -1156,6 +1187,9 @@ plot_pca <- function(pca, num_components = 2, col = NULL, col_palette = NULL,
 #' @export
 
 plot_pca_contribution <- function(pca, component = 1, chrom, pos, locus_type = NULL, y_buffer = 0) {
+  
+  # avoid "no visible binding" notes
+  x <- NULL
   
   # check inputs
   assert_custom_class(pca, "prcomp")
@@ -1612,6 +1646,9 @@ plot_map <- function(x_limits = c(12, 35),
                      size_country_border = 0.5,
                      col_sea = grey(0.1),
                      resolution = "coarse") {
+  
+  # avoid "no visible binding" notes
+  long <- lat <- group <- NULL
   
   # check inputs
   assert_vector(x_limits)

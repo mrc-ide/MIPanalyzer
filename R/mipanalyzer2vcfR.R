@@ -20,7 +20,7 @@ assignGTfrombiWSRAF <- function(wsraf, cutoff = 0.1){
   # extract GT matrix
   GT <- matrix(NA, dim(wsraf)[1], dim(wsraf)[2])
   
-  # round accordin to cutoff
+  # round according to cutoff
   GT <- ifelse(wsraf > 1-cutoff, "0/0",
                ifelse(wsraf < 0+cutoff, "1/1",
                       ifelse(!is.na(wsraf), "0/1", NA)))
@@ -37,6 +37,9 @@ assignGTfrombiWSRAF <- function(wsraf, cutoff = 0.1){
 
 
 MIPanalyzerbi2vcfR <- function(input = NULL, cutoff = 0.1){
+  
+  # avoid "no visible binding" notes
+  mipobj <- NULL
   
   if(!inherits(input, c("mipanalyzer_biallelic"))){
     stop("This function only works on objects of class mipanalyzer_biallelic or mipanalyzer_multiallelic, not class ", class(mipobj))

@@ -7,7 +7,6 @@ Maintainer: Bob Verity <r.verity@imperial.ac.uk>
 Description: Filtering and analysis of MIP data.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 LinkingTo: 
     Rcpp
 Imports: 
@@ -23,12 +22,13 @@ Imports:
     ape,
     stringr,
     methods,
-    rworldmap
-RoxygenNote: 7.0.2
+    rworldmap,
+    coda,
+    data.table
+RoxygenNote: 7.2.3
 SystemRequirements: C++11
 Suggests: 
     testthat,
-    covr,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

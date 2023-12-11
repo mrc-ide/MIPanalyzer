@@ -47,19 +47,21 @@ log_sum <- function(x) {
 # geweke_pvalue
 # return p-value of Geweke's diagnostic convergence statistic, estimated from package coda
 #' @noRd
+#' @importFrom coda geweke.diag
 geweke_pvalue <- function(x) {
-  ret <- 2*pnorm(abs(geweke.diag(x)$z), lower.tail=FALSE)
+  ret <- 2*pnorm(abs(coda::geweke.diag(x)$z), lower.tail=FALSE)
   return(ret)
 }
 
 #------------------------------------------------
 # check that geweke p-value non-significant on values x[1:n]
 #' @noRd
+#' @importFrom coda mcmc
 test_convergence <- function(x, n) {
   if (n == 1) {
     return(FALSE)
   }
-  g <- geweke_pvalue(mcmc(x[1:n]))
+  g <- geweke_pvalue(coda::mcmc(x[1:n]))
   ret <- (g > 0.01)
   if (is.na(ret)) {
     ret <- TRUE
