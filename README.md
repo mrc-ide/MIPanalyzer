@@ -1,49 +1,39 @@
----
-output: github_document
----
 
-# magenta
+<!-- badges: start -->
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Travis-CI Build Status](https://travis-ci.org/mrc-ide/MIPanalyzer.png?branch=master)](https://travis-ci.org/mrc-ide/MIPanalyzer)
+[![Project Status: WIP – Initial development is in progress, but there
+has not yet been a stable, usable release suitable for the
+public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![develop
+checks](https://github.com/mrc-ide/PlasmoSim/workflows/checks_develop/badge.svg)](https://github.com/mrc-ide/PlasmoSim/actions)
+[![master
+checks](https://github.com/mrc-ide/PlasmoSim/workflows/checks_master/badge.svg)](https://github.com/mrc-ide/PlasmoSim/actions)
+<!-- badges: end -->
 
+## MIPanalyzer
 
-## Motivation
+`MIPanalyzer` is a tool for analyzing MIP (molecular inversion probe)
+data. It performs the following functions:
 
-`MIPanalyzer` is a tool for analyzing MIPs (molecular inversion probe) data. This will usually be in the form of `vcf` files produced by [MIPwrangler](https://github.com/bailey-lab/MIPWrangler).
+- Reading in raw data, usually in the form of a `vcf` file produced by
+  [MIPwrangler](https://github.com/bailey-lab/MIPWrangler)
+- Filtering samples and loci based on coverage, missingness, and other
+  metrics
+- Performing simple population genetic analyses, such as PCA and basic
+  pairwise distance metrics
 
-## Installation
+All documentation, including installation instructions and tutorials,
+are on [the MIPanalyzer website](https://mrc-ide.github.io/MIPanalyzer).
 
-You can also install `MIPanalyzer` from github with:
+## Version History
 
+The software is current still in beta. Some functionality may be
+untested.
 
-```r
-#install.packages("devtools")
-devtools::install_github("mrc-ide/MIPanalyzer")
-```
+The current version of the software is v1.0.0, released 17 Dec 2019.
 
-Note that on Windows, a toolkit (Rtools) needs to be installed separately for devtools to work. 
+## Contributors
 
-Once installed, the package can be loaded using:
-
-
-```r
-# Load the package
-library(MIPanalyzer)
-```
-
-Documentation
--------------
-
-*MIPanalyzer* is documented on a [dedicated
- website](https://mrc-ide.github.io/MIPanalyzer).
-
-This includes the following vignettes:
-
-- **`Introduction`**: general introduction to using `MIPanalyzer`
-
-Contributors
-------------
 - [Bob Verity](https://github.com/bobverity)
 - [OJ Watson](https://github.com/ojwatson)
 - [Nick Brazeau](https://github.com/nickbrazeau)

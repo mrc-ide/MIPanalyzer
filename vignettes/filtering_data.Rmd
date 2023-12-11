@@ -1,0 +1,90 @@
+---
+title: "Reading in and filtering data"
+author: "Bob Verity"
+date: "Last updated: `r format(Sys.Date(), '%d %b %Y')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{filtering_data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(MIPanalyzer)
+library(kableExtra)
+```
+
+This tutorial covers:
+
+- Reading in data from `vcf`
+- Filtering data based on missingness
+- Filtering data based on other criteria
+
+## Reading in data and understanding the `mipanalyzer_biallelic` format
+
+Before doing anything, we will need tp load some additional packages:
+
+```{r, message=FALSE, warning=FALSE}
+# load some packages
+library(tidyverse)
+library(here)
+```
+
+We will be working from a `vcf` file stored in the `inst/extdata` folder of this package.
+
+```{r}
+# define the path to your .vcf file
+vcf_path <- here("inst/extdata", "DRC_pf3k_filtered.vcf")
+
+# load as mipanalyzer_biallelic object
+dat_biallelic <- vcf_to_mipanalyzer_biallelic(file = vcf_path)
+
+# take a peek
+dat_biallelic
+```
+
+## Filtering data based on missingness
+
+```{r}
+dat_biallelic |>
+  explore_filter_coverage_loci(min_coverage = 10, max_low_coverage = 25)
+```
+
+```{r}
+dat_biallelic <- dat_biallelic |>
+  filter_coverage_loci(min_coverage = 10, max_low_coverage = 25)
+```
+
+```{r}
+dat_biallelic |>
+  explore_filter_coverage_samples(min_coverage = 10, max_low_coverage = 25)
+```
+
+```{r}
+dat_biallelic <- dat_biallelic |>
+  filter_coverage_samples(min_coverage = 10, max_low_coverage = 25)
+```
+
+
+## Filtering based on other criteria
+
+```{r}
+dat_biallelic <- dat_biallelic |>
+  filter_overcounts()
+```
+
+```{r}
+dat_biallelic <- dat_biallelic |>
+  filter_loci_invariant()
+```
+
+```{r}
+dat_biallelic$filter_history
+```
