@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // inbreeding_mle_cpp
 Rcpp::List inbreeding_mle_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
 RcppExport SEXP _MIPanalyzer_inbreeding_mle_cpp(SEXP argsSEXP, SEXP args_functionsSEXP, SEXP args_progressSEXP) {
