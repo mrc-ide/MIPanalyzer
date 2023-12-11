@@ -103,6 +103,9 @@
     <loc>/reference/lonlat_to_bearing.html</loc>
   </url>
   <url>
+    <loc>/reference/mipanalyzer_biallelic_to_vcfR.html</loc>
+  </url>
+  <url>
     <loc>/reference/mipanalyzer_file.html</loc>
   </url>
   <url>
@@ -161,5 +164,11 @@
   </url>
   <url>
     <loc>/reference/vcf2mipanalyzer_multiallelic.html</loc>
+  </url>
+  <url>
+    <loc>/reference/vcf_to_mipanalyzer_biallelic.html</loc>
+  </url>
+  <url>
+    <loc>/reference/vcf_to_mipanalyzer_multiallelic.html</loc>
   </url>
 </urlset>

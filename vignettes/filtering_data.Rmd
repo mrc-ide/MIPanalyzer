@@ -23,13 +23,13 @@ library(kableExtra)
 
 This tutorial covers:
 
-- Reading in data from `vcf`
-- Filtering data based on missingness
-- Filtering data based on other criteria
+- Reading in data from a `vcf` file into MIPanalyzer format
+- Filtering based on coverage
+- Filtering based on other criteria
 
 ## Reading in data and understanding the `mipanalyzer_biallelic` format
 
-Before doing anything, we will need tp load some additional packages:
+Before doing anything, we will need to load some additional packages:
 
 ```{r, message=FALSE, warning=FALSE}
 # load some packages
@@ -37,7 +37,9 @@ library(tidyverse)
 library(here)
 ```
 
-We will be working from a `vcf` file stored in the `inst/extdata` folder of this package.
+We will be working from a `vcf` file stored in the `inst/extdata` folder of this package. Our first decision point is whether we want to read this `vcf` file in allowing for more than two alleles at any locus, or forcing data to bi-allelic. Many analyses assume bi-allelic SNPs, which also makes the data format more efficient as we only need to encode the read `counts` and `coverage` as single numbers, rather than storing multiple `counts` for each allele. Here we will assume bi-allelic data, but there will be a section below on the multi-allelic data format.
+
+The `vcf_to_mipanalyzer_biallelic()` can read in file and convert it to our custom format. It accepts a path to a `vcf` file, or alternatively you can read the `vcf` in yourself and pass this to the function:
 
 ```{r}
 # define the path to your .vcf file
@@ -50,40 +52,129 @@ dat_biallelic <- vcf_to_mipanalyzer_biallelic(file = vcf_path)
 dat_biallelic
 ```
 
-## Filtering data based on missingness
+We can see that we are working with 113 samples and 2667 loci. This dataset is actually filtered down from [Pf3k](https://www.malariagen.net/parasite/pf3k) whole genome data using samples from the Democratic Republic of the Congo (DRC). Although this object is its own custom class, it is essentially a list:
 
 ```{r}
+class(dat_biallelic)
+
+# look at sub-object names
+names(dat_biallelic)
+```
+
+The `coverage` and `counts` objects are our main genetic data:
+
+- `coverage` is the "DP" element of the `vcf`, which gives the combined read depth at this position.
+- `counts` is the *first* value in the "AD" element of the `vcf`, which gives the read depth of the first allele. We assume that this is the reference (REF) allele by convention.
+
+Both of these objects are matrices, with samples in rows and loci in columns:
+
+```{r}
+dim(dat_biallelic$coverage)
+dim(dat_biallelic$counts)
+```
+
+The next object is the `samples` element. This is a data.frame containing the sample names from the `vcf`. You can add whatever columns you like to this data.frame, making it easy to keep track of meta-data alongside genetic data.
+
+```{r}
+dim(dat_biallelic$samples)
+head(dat_biallelic$samples)
+```
+
+Next up is the `loci` element. This is a data.frame containing all the information in the "fix" element of the `vcf`:
+
+```{r}
+dim(dat_biallelic$loci)
+head(dat_biallelic$loci)
+```
+
+Next is the `filter_history` element. This contains a running record of all filters that are applied to the data via the MIPanalyzer package. Currently, we have applied no filters and so what we see are the raw dimensions of the data. We will return to this object later:
+
+```{r}
+dat_biallelic$filter_history
+```
+
+Finally, the `vcfmeta` element contains anything in the "meta" slot of the `vcf`. There may be a wide range of different information here, which is stored as a list. Here are just the first three elements in our example data:
+
+```{r}
+dat_biallelic$vcfmeta[1:3]
+```
+
+In summary, the `mipanalyzer_biallelic` class of data is just a re-coding of the `vcf`. It exposes the `coverage` and `counts` data, while also nice features in terms of keeping track of meta-data and filters.
+
+
+## Filtering data based on coverage
+
+We very often want to focus our attention on sites that have good coverage. Low coverage sites lead to uncertain estimates of within-sample allele frequencies, and may also be a sign of sequencing problems.
+
+We could choose to filter by sample, or by locus. Loci that have systematically low coverage over many samples may indicate issues with sequencing. We can use the `explore_filter_coverage_loci()` to explore this issue via the following steps:
+
+- Set a `min_coverage` threshold. Any `coverage` value less than this threshold we define as *low coverage*.
+- Count the percentage of samples that are *low coverage*. Do this for every locus.
+- Plot a histogram of this percentage
+- Set the `max_low_coverage` that we will accept as a percentage. Work out what how many samples fall below this level.
+
+This gives an indication of how many samples we will lose if we apply this filter, and produces the following plot:
+
+```{r, fig.width=6, fig.height=4}
 dat_biallelic |>
   explore_filter_coverage_loci(min_coverage = 10, max_low_coverage = 25)
 ```
+
+We can see that we will lose 3.22% of samples if we apply this filter, which is acceptable. We can therefore go ahead and apply the filter:
 
 ```{r}
 dat_biallelic <- dat_biallelic |>
   filter_coverage_loci(min_coverage = 10, max_low_coverage = 25)
 ```
 
-```{r}
+Next, we can perform the same task but looking at it from a sample perspective. This involves the following steps:
+
+- Set a `min_coverage` threshold. Any `coverage` value less than this threshold we define as *low coverage*.
+- Count the percentage of loci that are *low coverage*. Do this for every sample.
+- Plot a histogram of this percentage
+- Set the `max_low_coverage` that we will accept as a percentage. Work out what how many loci fall below this level.
+
+We obtain the following plot:
+
+```{r, fig.width=6, fig.height=4}
 dat_biallelic |>
-  explore_filter_coverage_samples(min_coverage = 10, max_low_coverage = 25)
+  explore_filter_coverage_samples(min_coverage = 10, max_low_coverage = 10)
 ```
+
+Note that from the shape of the histogram we have good coverage for many samples, and then a few samples that perform poorly with low coverage over many loci. We therefore set quite a stringent threshold of `max_low_coverage = 10` to exclude these samples. We can see that we will lose 20.35% of samples, which is a fairly stringent filter, but will leave us with high quality samples.
 
 ```{r}
 dat_biallelic <- dat_biallelic |>
-  filter_coverage_samples(min_coverage = 10, max_low_coverage = 25)
+  filter_coverage_samples(min_coverage = 10, max_low_coverage = 10)
 ```
 
+Every time we apply one of these filters, the change to data dimension is stored in the `filter_history` element along with the function call itself:
+
+```{r}
+dat_biallelic$filter_history
+```
+
+We can see that we are left with 91 samples, down from 113 initially, and 2581 loci, down from 2667. Our proportion of missing data has dropped considerably through these filters.
 
 ## Filtering based on other criteria
 
+Above, we filtered based on coverage, but we may also want to exclude loci/samples for other reasons. The `filter_overcounts()` function replaces any cell where the `count` exceeds the `coverage` with `NA`. It should technically not be possible for `count` to exceed `coverage` due to the way they are defined, but this can come about due to upstream issues. Note that we are not actually dropping any samples or loci via this filter, we are just recoding information as missing.
+
 ```{r}
+# deal with count>coverage issues
 dat_biallelic <- dat_biallelic |>
   filter_overcounts()
 ```
 
+Now that we have discarded some samples, we may be left with some loci that are no longer variable in the samples that remain. We probably want to discard these as they do not contain useful information. We can do this via the `filter_loci_invariant()` function:
+
 ```{r}
+# drop loci that are no longer variable
 dat_biallelic <- dat_biallelic |>
   filter_loci_invariant()
 ```
+
+Again, we can look at our filter history to see how these changes have impacted our data dimensions:
 
 ```{r}
 dat_biallelic$filter_history

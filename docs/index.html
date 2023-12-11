@@ -73,7 +73,14 @@
 <div class="section level1">
 <div class="page-header"><h1 id="mipanalyzer">MIPanalyzer<a class="anchor" aria-label="anchor" href="#mipanalyzer"></a>
 </h1></div>
-<p>Website landing page.</p>
+<p>MIPanalyzer is an R package for working with molecular inversion probe (MIP) data to perform various analysis and visualisation functions. The motivation for developing this package was that <code>vcf</code> data can be difficult to work with due to the way the important information is locked away inside a very specific character string format. What we want most of the time is simply the number of reads of the major allele (which we call <code>counts</code>), and the total number of reads (which we call <code>coverage</code>). From these two numbers alone we can calculate within sample allele frequencies, perform filtering, calculate relatedness, etc. The second motivation was to represent this information in an efficient way. Most of the time we will have this information for every locus and every sample (apart from missing data), and so long format is not efficient because the same locus/sample information is repeated many times. We opt for a simple matrix for <code>counts</code> and <code>coverage</code>, with the sample and locus data being stored in separate objects that always retain the correct dimension. Finally, this package is intended to evolve and develop as new MIP analyses are needed. For example, rather than developing a nice figure for a paper in standalone script, this package provides a location to write this as a general function so it is available to others in the future.</p>
+<p>Current main functionalities include:</p>
+<ul>
+<li>Filtering samples or loci based on <code>counts</code>, <code>coverage</code>, missingness, or other criteria.</li>
+<li>Population structure analysis through principal components analysis (PCA) and visualisation of these results.</li>
+<li>Calculation of pairwise genetic distances, including a maximum-likelihood F estimate.</li>
+<li>Basic simulation of MIP data</li>
+</ul>
 </div>
   </div>
 
@@ -98,7 +105,7 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Bob Verity <br><small class="roles"> Maintainer </small>  </li>
+<li>Bob Verity <br><small class="roles"> Author, maintainer </small>  </li>
 </ul>
 </div>
 
