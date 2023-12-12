@@ -1,7 +1,7 @@
 Package: MIPanalyzer
 Type: Package
 Title: Filtering and analysis of MIP data
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: as.person(c(
     "Bob Verity <r.verity@imperial.ac.uk> [aut, cre]"
   ))

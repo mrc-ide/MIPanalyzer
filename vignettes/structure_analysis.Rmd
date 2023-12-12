@@ -62,7 +62,7 @@ pca <- pca_wsaf(wsaf)
 # plot first 3 components
 plot_pca(pca, num_components = 3)
 ```
-![](PCA_scatter.png){width=80%}
+<img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/PCA_scatter.png" style="width: 80%">
 
 This is a static image of the plot you will see - you will be able to rotate and zoom it. We do not see any clear signal of clustering in this plot, which may indicate that allele frequencies are relatively homogeneous throughout these samples.
 
@@ -72,7 +72,7 @@ We may also want to know how much variance is explained by each component:
 # plot percentage variance explained
 plot_pca_variance(pca)
 ```
-![](PCA_variance.png){width=60%}
+<img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/PCA_variance.png" style="width: 60%">
 
 Only a small percentage of the variance is explained by each component, which again indicates that there is weak structure in the data.
 
@@ -114,6 +114,6 @@ pcoa <- pcoa_genomic_distance(gdist)
 # scatterplot
 plot_pcoa(pcoa, num_components = 3)
 ```
-![Plotly image](PCOA_scatter.png){width=80%}
+<img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/PCOA_scatter.png" style="width: 80%">
 
 As before, we find little evidence of clustering, although there are a few interesting outliers. This implies that most samples have roughly the same genetic distance to all others, and so there is no strong signal of clustering of allele frequencies.
