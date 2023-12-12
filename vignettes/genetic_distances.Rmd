@@ -64,7 +64,7 @@ mle_inbreeding$mle[1:5,1:5]
 
 We can see that for the first 5 samples our best estimate is that these samples are completely unrelated. We can convert this into a genetic distance by taking one minus the relatedness, which results less related samples having a greater distance between them. We can then visualise the matrix of distances between all samples:
 
-```{r, fig.width=5, fig.height=5}
+```{r, fig.width=5, fig.height=6}
 # convert to a distance
 dist_inbreeding <- 1 - mle_inbreeding$mle
 

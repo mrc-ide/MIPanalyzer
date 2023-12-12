@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MIPanalyzer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.0</span>
       </span>
     </div>
 
@@ -130,7 +130,7 @@ we should keep in mind that some of this is imputed data.</p>
 <span></span>
 <span><span class="co"># plot first 3 components</span></span>
 <span><span class="fu"><a href="../reference/plot_pca.html">plot_pca</a></span><span class="op">(</span><span class="va">pca</span>, num_components <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../../../../My%20Programs/MIPs/MIPanalyzer/articles/PCA_scatter.png" style="width:80.0%"></p>
+<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/PCA_scatter.png" style="width: 80%"></p>
 <p>This is a static image of the plot you will see - you will be able to
 rotate and zoom it. We do not see any clear signal of clustering in this
 plot, which may indicate that allele frequencies are relatively
@@ -140,7 +140,7 @@ component:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># plot percentage variance explained</span></span>
 <span><span class="fu"><a href="../reference/plot_pca_variance.html">plot_pca_variance</a></span><span class="op">(</span><span class="va">pca</span><span class="op">)</span></span></code></pre></div>
-<p><img src="../../../../My%20Programs/MIPs/MIPanalyzer/articles/PCA_variance.png" style="width:60.0%"></p>
+<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/PCA_variance.png" style="width: 60%"></p>
 <p>Only a small percentage of the variance is explained by each
 component, which again indicates that there is weak structure in the
 data.</p>
@@ -194,9 +194,7 @@ result:</p>
 <span></span>
 <span><span class="co"># scatterplot</span></span>
 <span><span class="fu"><a href="../reference/plot_pcoa.html">plot_pcoa</a></span><span class="op">(</span><span class="va">pcoa</span>, num_components <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<div class="float">
-<img src="../../../../My%20Programs/MIPs/MIPanalyzer/articles/PCOA_scatter.png" style="width:80.0%" alt="Plotly image"><div class="figcaption">Plotly image</div>
-</div>
+<p><img src="https://github.com/mrc-ide/MIPanalyzer/raw/master/vignettes/PCOA_scatter.png" style="width: 80%"></p>
 <p>As before, we find little evidence of clustering, although there are
 a few interesting outliers. This implies that most samples have roughly
 the same genetic distance to all others, and so there is no strong
