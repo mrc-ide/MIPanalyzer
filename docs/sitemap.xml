@@ -10,6 +10,9 @@
     <loc>/articles/filtering_data.html</loc>
   </url>
   <url>
+    <loc>/articles/genetic_distances.html</loc>
+  </url>
+  <url>
     <loc>/articles/index.html</loc>
   </url>
   <url>
@@ -17,6 +20,9 @@
   </url>
   <url>
     <loc>/articles/introduction.html</loc>
+  </url>
+  <url>
+    <loc>/articles/structure_analysis.html</loc>
   </url>
   <url>
     <loc>/authors.html</loc>
@@ -103,6 +109,9 @@
     <loc>/reference/lonlat_to_bearing.html</loc>
   </url>
   <url>
+    <loc>/reference/mipanalyzer_biallelic_to_vcfR.html</loc>
+  </url>
+  <url>
     <loc>/reference/mipanalyzer_file.html</loc>
   </url>
   <url>
@@ -118,6 +127,9 @@
     <loc>/reference/plot_coverage.html</loc>
   </url>
   <url>
+    <loc>/reference/plot_distance.html</loc>
+  </url>
+  <url>
     <loc>/reference/plot_map.html</loc>
   </url>
   <url>
@@ -131,6 +143,9 @@
   </url>
   <url>
     <loc>/reference/plot_pcoa.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_wsaf.html</loc>
   </url>
   <url>
     <loc>/reference/print.mipanalyzer_biallelic.html</loc>
@@ -161,5 +176,11 @@
   </url>
   <url>
     <loc>/reference/vcf2mipanalyzer_multiallelic.html</loc>
+  </url>
+  <url>
+    <loc>/reference/vcf_to_mipanalyzer_biallelic.html</loc>
+  </url>
+  <url>
+    <loc>/reference/vcf_to_mipanalyzer_multiallelic.html</loc>
   </url>
 </urlset>

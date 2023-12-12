@@ -12,6 +12,10 @@ navbar:
       menu:
         - text: Filtering data
           href: articles/filtering_data.html
+        - text: Structure analysis
+          href: articles/structure_analysis.html
+        - text: Comparing genetic distances
+          href: articles/genetic_distances.html
     - text: Functions
       href: reference/index.html
 
