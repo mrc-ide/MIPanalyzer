@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MIPanalyzer</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.1.0</span>
       </span>
     </div>
 
@@ -90,8 +90,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">MIPanalyzer</span><span class="op">)</span></span></code></pre></div>
 <p>This tutorial covers:</p>
 <ul>
 <li>Estimating relatedness between samples via maximum likelihood.</li>
@@ -102,33 +100,34 @@
 </h2>
 <p>Before doing anything, we will need to load some additional
 packages:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># load some packages</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span></span></code></pre></div>
 <p>We will use a dataset of bi-allelic data already in the
 <code>mipanalyzer_biallelic</code> format and filtered down to the
 samples of interest (see earlier tutorial). We can load this example
 data as follows:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># read mipanalyzer_biallelic from path</span></span>
 <span><span class="va">dat_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"inst/extdata"</span>, <span class="st">"dat_biallelic.rds"</span><span class="op">)</span></span>
 <span><span class="va">dat_biallelic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">dat_path</span><span class="op">)</span></span></code></pre></div>
 <p>We want to estimate how related each sample is to each other as a
 proportion between 0 and 1. This is not the same thing as simply
-comparing genotypes, because a samples may be have identical information
+comparing genotypes because a samples may be have identical information
 at a given locus (identity in state, IBS) without sharing a recent
 common ancestor (identity by descent, IBD). In order to work out IBD, we
 have to somehow account for the chance probability of being the
 same.</p>
-<p>One approach is to use the population-level allele frequencies
-(PLAFs) as our model for how likely a sample is to carry the REF vs. ALT
-allele. Let <span class="math inline">\(p\)</span> be the PLAF of the
-REF allele at a given locus, and <span class="math inline">\(q=1-p\)</span> be the PLAF of the ALT allele. We
-can write down the probability of two samples being identical for the
-REF allele (<span class="math inline">\(\text{Homo REF}\)</span>),
-identical for the ALT allele (<span class="math inline">\(\text{Homo
-ALT}\)</span>), or non-identical (<span class="math inline">\(\text{Het}\)</span>) as a function of these allele
-frequencies and the inbreeding coefficient, <span class="math inline">\(f\)</span>:</p>
+<p>One approach that was used <a href="https://doi.org/10.1038/s41467-020-15779-8" class="external-link">in this paper</a> is
+to use the population-level allele frequencies (PLAFs) as our model for
+how likely a sample is to carry the REF vs. ALT allele. Let <span class="math inline">\(p\)</span> be the PLAF of the REF allele at a
+given locus, and <span class="math inline">\(q=1-p\)</span> be the PLAF
+of the ALT allele. We can write down the probability of two samples
+being identical for the REF allele (<span class="math inline">\(\text{Homo REF}\)</span>), identical for the ALT
+allele (<span class="math inline">\(\text{Homo ALT}\)</span>), or
+non-identical (<span class="math inline">\(\text{Het}\)</span>) as a
+function of these allele frequencies and the inbreeding coefficient,
+<span class="math inline">\(f\)</span>:</p>
 <p><span class="math inline">\(Pr(\text{Homo REF}) = fp +
 (1-f)p^2\)</span></p>
 <p><span class="math inline">\(Pr(\text{Homo ALT}) = fq +
@@ -143,7 +142,7 @@ Nevertheless, this is a quick and easy way of getting an impression of
 relatedness between samples.</p>
 <p>The function <code><a href="../reference/inbreeding_mle.html">inbreeding_mle()</a></code> performs all of the steps
 above on all pairwise samples:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mle_inbreeding</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/inbreeding_mle.html">inbreeding_mle</a></span><span class="op">(</span><span class="va">dat_biallelic</span>, report_progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mle_inbreeding</span><span class="op">$</span><span class="va">mle</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
@@ -158,16 +157,16 @@ these samples are completely unrelated. We can convert this into a
 genetic distance by taking one minus the relatedness, which results less
 related samples having a greater distance between them. We can then
 visualise the matrix of distances between all samples:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># convert to a distance</span></span>
 <span><span class="va">dist_inbreeding</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">mle_inbreeding</span><span class="op">$</span><span class="va">mle</span></span>
 <span></span>
 <span><span class="co"># plot all pairwise distances between samples</span></span>
 <span><span class="fu"><a href="../reference/plot_distance.html">plot_distance</a></span><span class="op">(</span><span class="va">dist_inbreeding</span>, col_pal <span class="op">=</span> <span class="st">"magma"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="genetic_distances_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="genetic_distances_files/figure-html/unnamed-chunk-6-1.png" width="480"></p>
 <p>There are a few pairs of samples that jump out as having low
 distances (high relatedness). We can identify these samples:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># find the highly related pairs</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">dist_inbreeding</span> <span class="op">&lt;=</span> <span class="fl">0.1</span>, arr.ind <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt;      row col</span></span>
@@ -177,11 +176,11 @@ distances (high relatedness). We can identify these samples:</p>
 <p>We can see that samples 53 and 54 appear to be highly related. It is
 interesting to look at the within-sample allele frequencies (WSAFs) of
 all samples from 51 to 55:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># plot WSAFs of samples 51 through 55</span></span>
 <span><span class="va">wsaf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_wsaf.html">get_wsaf</a></span><span class="op">(</span><span class="va">dat_biallelic</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/plot_wsaf.html">plot_wsaf</a></span><span class="op">(</span><span class="va">wsaf</span><span class="op">[</span><span class="fl">51</span><span class="op">:</span><span class="fl">55</span>,<span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<p><img src="genetic_distances_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
+<p><img src="genetic_distances_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
 <p>Most samples have clearly different patterns of WSAFs, but we can see
 that samples 53 and 54 (the 3rd and 4th rows of this plot) have almost
 identical WSAFs everywhere. This is a sanity check of what the MLE
@@ -196,7 +195,7 @@ transmission chain between them.</p>
 <p>Several different methods for calculating genetic distances are
 implemented inside <code>MIPanalyzer</code>. Let’s calculate a few of
 them and compare results:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dist_genomic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_genomic_distance.html">get_genomic_distance</a></span><span class="op">(</span><span class="va">dat_biallelic</span>, report_progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">dist_IBS</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_IBS_distance.html">get_IBS_distance</a></span><span class="op">(</span><span class="va">dat_biallelic</span>, report_progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">dist_mixture</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="../reference/get_IB_mixture.html">get_IB_mixture</a></span><span class="op">(</span><span class="va">dat_biallelic</span>, report_progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -207,7 +206,7 @@ them and compare results:</p>
 <span>           IBS <span class="op">=</span> <span class="va">dist_IBS</span><span class="op">[</span><span class="va">upper</span><span class="op">]</span>,</span>
 <span>           mixture <span class="op">=</span> <span class="va">dist_mixture</span><span class="op">[</span><span class="va">upper</span><span class="op">]</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="genetic_distances_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+<p><img src="genetic_distances_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
 <p>We can see that the “genomic” distance and the “MLE inbreeding”
 distance agree quite closely. Also the “IBS” distance and the “mixture”
 distance agree closely. However, the two sets of distances do not agree

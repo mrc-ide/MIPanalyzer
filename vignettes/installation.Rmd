@@ -34,7 +34,7 @@ install.packages("devtools", repos = 'http://cran.us.r-project.org')
 Then install the `MIPanalyzer` package directly from GitHub by running
 
 ```{r, eval = FALSE}
-devtools::install_github("mrc-ide/MIPanalyzer")
+devtools::install_github("mrc-ide/MIPanalyzer", ref = "v1.1.0")
 ```
 
 If you have any problems installing then please [raise an issue](https://github.com/mrc-ide/MIPanalyzer/issues) on github.
