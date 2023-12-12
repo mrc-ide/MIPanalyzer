@@ -1,9 +1,6 @@
 
 <!-- badges: start -->
 
-[![Project Status: WIP – Initial development is in progress, but there
-has not yet been a stable, usable release suitable for the
-public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![develop
 checks](https://github.com/mrc-ide/PlasmoSim/workflows/checks_develop/badge.svg)](https://github.com/mrc-ide/PlasmoSim/actions)
 [![master
@@ -27,10 +24,8 @@ are on [the MIPanalyzer website](https://mrc-ide.github.io/MIPanalyzer).
 
 ## Version History
 
-The software is current still in beta. Some functionality may be
-untested.
-
-The current version of the software is v1.0.0, released 17 Dec 2019.
+The current release version of the software is v1.1.0, released 12 Dec
+2023.
 
 ## Contributors
 
