@@ -98,6 +98,48 @@ get_wsaf <- function(x, impute = TRUE, FUN = median, ...) {
 }
 
 #------------------------------------------------
+#' @title Plot within-sample allele frequencies
+#'
+#' @description Simple image plot of within-sample allele frequencies. The top
+#'   row of the plot corresponds to the first row of the input matrix.
+#'
+#' @param x matrix of within-sample allele frequencies, with samples in rows and
+#'   loci in columns.
+#' @param col_pal which viridis colour pallet to use. Options are "viridis",
+#'   "plasma", "magma" or "inferno".
+#' 
+#' @importFrom methods is
+#' @export
+
+plot_wsaf <- function(x, col_pal = "plasma") {
+  
+  # avoid "no visible binding" notes
+  locus <- wsaf <- NULL
+  
+  # check inputs
+  assert_matrix(x)
+  assert_bounded(x)
+  assert_single_string(col_pal)
+  assert_in(col_pal, c("viridis", "plasma", "magma", "inferno"))
+  
+  # get matrix into long-form data.frame
+  df_plot <- data.frame(sample = nrow(x):1,
+                        locus = rep(1:ncol(x), each = nrow(x)),
+                        wsaf = as.vector(x))
+  
+  # produce plot
+  df_plot |>
+    ggplot() + theme_bw() +
+    geom_tile(aes(x = locus, y = sample, fill = wsaf)) +
+    scale_fill_viridis_c(option = col_pal) +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    xlab("Locus") + ylab("Sample") +
+    theme(axis.ticks = element_blank(),
+          axis.text = element_blank())
+}
+
+#------------------------------------------------
 #' @title Produce ggplot map
 #'
 #' @description Produce ggplot map.
@@ -170,26 +212,4 @@ Pf_chrom_lengths <- function() {
                                1687655, 2038337, 2271478,
                                2895605, 3291871))
   return(ret)
-}
-
-#------------------------------------------------
-#' @title Ordinary print function for unclassed object
-#'
-#' @description Calling \code{print()} on an object of custom class, e.g.
-#'   \code{mipanalyzer_biallelic}, results in custom output. This function
-#'   therefore stands in for the base \code{print()} function, and is equivalent
-#'   to running \code{print(unclass(x))}.
-#'
-#' @param x object of custom class (e.g. \code{mipanalyzer_biallelic}).
-#' @param ... other arguments passed to \code{print()}.
-#'
-#' @export
-
-print_full <- function(x, ...) {
-  
-  # print un-classed object
-  print(unclass(x), ...)
-  
-  # return invisibly
-  invisible(x)
 }

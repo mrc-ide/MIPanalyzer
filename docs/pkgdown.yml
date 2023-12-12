@@ -3,6 +3,8 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   filtering_data: filtering_data.html
+  genetic_distances: genetic_distances.html
   installation: installation.html
-last_built: 2023-12-11T01:47Z
+  structure_analysis: structure_analysis.html
+last_built: 2023-12-12T10:59Z
 

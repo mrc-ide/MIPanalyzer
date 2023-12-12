@@ -9,11 +9,11 @@ get_IBS_distance(x, ignore_het = TRUE, diagonal = NULL, report_progress = TRUE)
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}
 
-\item{ignore_het}{whether to ignore heterzygous comparisons, or alternatively
+\item{ignore_het}{whether to ignore heterozygous comparisons, or alternatively
 call the major allele at every locus (see details).}
 
 \item{diagonal}{Should the diagonal of the distance matrix be changed to a
-given value. Deafult = NULL, which cause no changes.}
+given value. Default = \code{NULL}, which cause no changes.}
 
 \item{report_progress}{if \code{TRUE} then a progress bar is printed to the
 console.}
