@@ -9,14 +9,18 @@ get_IB_mixture(x, tol = 0, diagonal = NULL, report_progress = TRUE)
 \arguments{
 \item{x}{object of class \code{mipanalyzer_biallelic}.}
 
-\item{tol}{tolerance on mixture comparisons. Defeault = 0}
+\item{tol}{tolerance on mixture comparisons. Default = 0.}
 
 \item{diagonal}{Should the diagonal of the distance matrix be changed to a
-given value. Deafult = NULL, which cause no changes.}
+given value. Default = NULL, which cause no changes.}
 
 \item{report_progress}{if \code{TRUE} then a progress bar is printed to the
 console.}
 }
 \description{
-Get identity by mixture distance.
+Get identity by "mixture distance". The mixture distance between
+  two samples is the proportion of loci that have identical within-sample
+  allele frequencies (WSAFs), or alternatively have WSAFs within a given
+  tolerance. This extends the idea of identity by state (IBS) to continuous
+  WSAFs rather than categorical genotypes.
 }

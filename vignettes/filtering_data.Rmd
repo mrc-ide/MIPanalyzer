@@ -4,7 +4,7 @@ author: "Bob Verity"
 date: "Last updated: `r format(Sys.Date(), '%d %b %Y')`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{filtering_data}
+  %\VignetteIndexEntry{Reading in and filtering data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,6 @@ knitr::opts_chunk$set(
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(MIPanalyzer)
-library(kableExtra)
 ```
 
 This tutorial covers:
@@ -33,7 +32,6 @@ Before doing anything, we will need to load some additional packages:
 
 ```{r, message=FALSE, warning=FALSE}
 # load some packages
-library(tidyverse)
 library(here)
 ```
 

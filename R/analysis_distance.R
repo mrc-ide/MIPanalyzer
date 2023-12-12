@@ -231,12 +231,16 @@ inbreeding_mle <- function(x, f = seq(0,1,l=11), ignore_het = FALSE, report_prog
 #------------------------------------------------
 #' @title Get identity by mixture
 #'
-#' @description Get identity by mixture distance.
+#' @description Get identity by "mixture distance". The mixture distance between
+#'   two samples is the proportion of loci that have identical within-sample
+#'   allele frequencies (WSAFs), or alternatively have WSAFs within a given
+#'   tolerance. This extends the idea of identity by state (IBS) to continuous
+#'   WSAFs rather than categorical genotypes.
 #'
 #' @param x object of class \code{mipanalyzer_biallelic}.
-#' @param tol tolerance on mixture comparisons. Defeault = 0
+#' @param tol tolerance on mixture comparisons. Default = 0.
 #' @param diagonal Should the diagonal of the distance matrix be changed to a
-#'   given value. Deafult = NULL, which cause no changes.
+#'   given value. Default = NULL, which cause no changes.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console.
 #'
@@ -247,6 +251,9 @@ get_IB_mixture <- function(x, tol = 0, diagonal = NULL, report_progress = TRUE) 
   # check inputs
   assert_custom_class(x, "mipanalyzer_biallelic")
   assert_single_numeric(tol)
+  if (!is.null(diagonal)) {
+    assert_single_numeric(diagonal)
+  }
   assert_single_logical(report_progress)
   
   # get basic quantities
@@ -277,6 +284,7 @@ get_IB_mixture <- function(x, tol = 0, diagonal = NULL, report_progress = TRUE) 
   if (!is.null(diagonal)) {
     ret[diag(ret)] <- diagonal
   }
+  ret[lower.tri(ret)] <- NA
   
   # return distance matrix
   return(ret)
@@ -292,10 +300,10 @@ get_IB_mixture <- function(x, tol = 0, diagonal = NULL, report_progress = TRUE) 
 #'   at every locus.
 #'
 #' @param x object of class \code{mipanalyzer_biallelic}.
-#' @param ignore_het whether to ignore heterzygous comparisons, or alternatively
+#' @param ignore_het whether to ignore heterozygous comparisons, or alternatively
 #'   call the major allele at every locus (see details).
 #' @param diagonal Should the diagonal of the distance matrix be changed to a
-#'   given value. Deafult = NULL, which cause no changes.
+#'   given value. Default = \code{NULL}, which cause no changes.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console.
 #'
@@ -340,7 +348,44 @@ get_IBS_distance <- function(x, ignore_het = TRUE, diagonal = NULL, report_progr
   if (!is.null(diagonal)) {
     ret[diag(ret)] <- diagonal
   }
+  ret[lower.tri(ret)] <- NA
+  
   
   # return distance matrix
   return(ret)
+}
+
+#------------------------------------------------
+#' @title Plot a distance matrix
+#'
+#' @description Simple image plot of a matrix of pairwise distances.
+#'
+#' @param m square matrix of pairwise distances.
+#' @param col_pal which viridis colour pallet to use. Options are "viridis",
+#'   "plasma", "magma" or "inferno".
+#'
+#' @export
+
+plot_distance <- function(m, col_pal = "plasma") {
+  
+  # avoid "no visible binding" notes
+  x <- y <- value <- NULL
+  
+  # check inputs
+  assert_square_matrix(m)
+  assert_single_string(col_pal)
+  assert_in(col_pal, c("viridis", "plasma", "magma", "inferno"))
+  
+  # get matrix into long-form data.frame
+  n <- nrow(m)
+  df_plot <- data.frame(x = 1:n,
+                        y = rep(1:n, each = n),
+                        value = as.vector(m))
+  
+  # produce plot
+  df_plot |>
+    ggplot() + theme_void() +
+    geom_tile(aes(x = x, y = y, fill = value)) +
+    scale_fill_viridis_c(option = col_pal, na.value = "white")
+  
 }
